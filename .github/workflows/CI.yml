@@ -70,9 +70,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actionsx/prettier@v3
+      - uses: creyD/prettier_action@v4.6
         with:
-          args: --check .
+          only_changed: True
+          dry: True
 
   typos:
     name: Spell Check with Typos

@@ -107,8 +107,6 @@ Available platforms:
 - **`native`**: Uses system-installed `typst` command
 - **`none`**: Only generates `.typ` files, no PDF compilation (fastest, recommended for development)
 
-See [`test/typst_backend/RUNNING_TESTS.md`](../../test/typst_backend/RUNNING_TESTS.md) for detailed instructions.
-
 ### Adding Tests
 
 When adding new features:

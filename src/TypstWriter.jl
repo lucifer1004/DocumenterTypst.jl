@@ -440,20 +440,26 @@ function compile(c::DockerCompiler, fileprefix::String)
     Sys.which("docker") === nothing && error("docker command not found")
     @info "TypstWriter: using docker to compile typ."
 
+    # Use current user's UID:GID for Docker to avoid permission issues
+    uid = @static if Sys.iswindows()
+        # Windows doesn't have UIDs, Docker Desktop handles this differently
+        "1000:1000"
+    else
+        string(Base.Libc.geteuid(), ":", Base.Libc.getegid())
+    end
+
+    workdir = "/work"
     script = """
-    mkdir /home/zeptodoctor/build
-    cd /home/zeptodoctor/build
-    cp -r /mnt/. .
+    cd $(workdir)
     typst compile $(fileprefix).typ
     """
 
     try
         piperun(
-            `docker run -itd -u zeptodoctor --name typst-container -v $(pwd()):/mnt/ --rm juliadocs/documenter-Typst:$(c.image_tag)`;
+            `docker run -itd -u $(uid) --name typst-container -v $(pwd()):$(workdir) --rm juliadocs/documenter-Typst:$(c.image_tag)`;
             clearlogs = true
         )
-        piperun(`docker exec -u zeptodoctor typst-container bash -c $(script)`)
-        piperun(`docker cp typst-container:/home/zeptodoctor/build/$(fileprefix).pdf .`)
+        piperun(`docker exec typst-container bash -c $(script)`)
         return true
     finally
         try
