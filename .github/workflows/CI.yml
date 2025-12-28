@@ -96,7 +96,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6" # Minimum supported version
+          - "lts" # Long-term support release
           - "1" # Latest stable release
           - "nightly" # Test against upcoming features
         os:
@@ -110,10 +110,6 @@ jobs:
           - os: ubuntu-latest
             version: "1"
             arch: x86
-        exclude:
-          - os: macos-latest
-            version: "1.6"
-            arch: default
     steps:
       # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
       - name: Checkout repository
@@ -203,15 +199,8 @@ jobs:
           files: lcov.info
           flags: typst-backend
 
-      - name: Upload Typst artifacts
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: typst-${{ matrix.platform }}-${{ matrix.os }}
-          path: |
-            test/typst_backend/builds/**/*.typ
-            test/typst_backend/builds/**/*.pdf
-          retention-days: 7
+      # Note: Tests use mktempdir() for isolation - artifacts are not preserved
+      # If tests pass, the generated files are correct. No need to upload them.
 
   # ============================================================================
   # Documentation
@@ -310,10 +299,10 @@ jobs:
 
           ### Installation
 
-          \`\`\`julia
+          ```julia
           using Pkg
           Pkg.add(name="DocumenterTypst", version="${{ steps.get_version.outputs.VERSION }}")
-          \`\`\`
+          ```
 
           ### Documentation
 

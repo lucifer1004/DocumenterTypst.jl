@@ -1,7 +1,7 @@
 # DocumenterTypst.jl
 
-[![CI](https://github.com/lucifer1004/DocumenterTypst/actions/workflows/CI.yml/badge.svg)](https://github.com/lucifer1004/DocumenterTypst/actions/workflows/CI.yml)
-[![codecov](https://codecov.io/gh/lucifer1004/DocumenterTypst/branch/main/graph/badge.svg)](https://codecov.io/gh/lucifer1004/DocumenterTypst)
+[![CI](https://github.com/lucifer1004/DocumenterTypst.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/lucifer1004/DocumenterTypst.jl/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/lucifer1004/DocumenterTypst.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/lucifer1004/DocumenterTypst.jl)
 
 A [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) plugin for generating documentation in Typst/PDF format.
 
