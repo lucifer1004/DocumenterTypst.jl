@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Advanced Features · DocumenterTypst.jl</title><meta name="title" content="Advanced Features · DocumenterTypst.jl"/><meta property="og:title" content="Advanced Features · DocumenterTypst.jl"/><meta property="twitter:title" content="Advanced Features · DocumenterTypst.jl"/><meta name="description" content="Documentation for DocumenterTypst.jl."/><meta property="og:description" content="Documentation for DocumenterTypst.jl."/><meta property="twitter:description" content="Documentation for DocumenterTypst.jl."/><meta property="og:url" content="https://lucifer1004.github.io/DocumenterTypst.jl/examples/advanced/"/><meta property="twitter:url" content="https://lucifer1004.github.io/DocumenterTypst.jl/examples/advanced/"/><link rel="canonical" href="https://lucifer1004.github.io/DocumenterTypst.jl/examples/advanced/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">DocumenterTypst.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../manual/getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../manual/configuration/">Configuration</a></li><li><a class="tocitem" href="../../manual/math/">Math Support</a></li><li><a class="tocitem" href="../../manual/styling/">Custom Styling</a></li><li><a class="tocitem" href="../../manual/troubleshooting/">Troubleshooting</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../basic/">Basic Usage</a></li><li class="is-active"><a class="tocitem" href>Advanced Features</a><ul class="internal"><li><a class="tocitem" href="#Custom-Templates"><span>Custom Templates</span></a></li><li><a class="tocitem" href="#Multiple-Output-Formats"><span>Multiple Output Formats</span></a></li><li><a class="tocitem" href="#Conditional-Content"><span>Conditional Content</span></a></li><li><a class="tocitem" href="#Advanced-Math"><span>Advanced Math</span></a></li><li><a class="tocitem" href="#Performance-Optimization"><span>Performance Optimization</span></a></li><li><a class="tocitem" href="#Integration-with-Other-Tools"><span>Integration with Other Tools</span></a></li><li><a class="tocitem" href="#Debugging"><span>Debugging</span></a></li><li><a class="tocitem" href="#Migration-Examples"><span>Migration Examples</span></a></li><li><a class="tocitem" href="#Real-World-Examples"><span>Real-World Examples</span></a></li><li><a class="tocitem" href="#Best-Practices"><span>Best Practices</span></a></li><li><a class="tocitem" href="#Tips-and-Tricks"><span>Tips &amp; Tricks</span></a></li></ul></li><li><a class="tocitem" href="../migration/">Migration from LaTeX</a></li></ul></li><li><a class="tocitem" href="../../api/reference/">API Reference</a></li><li><a class="tocitem" href="../../release-notes/">Release Notes</a></li><li><a class="tocitem" href="../../contributing/">Contributing</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Advanced Features</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Advanced Features</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/lucifer1004/DocumenterTypst.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/lucifer1004/DocumenterTypst.jl/blob/main/docs/src/examples/advanced.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Advanced-Features"><a class="docs-heading-anchor" href="#Advanced-Features">Advanced Features</a><a id="Advanced-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Features" title="Permalink"></a></h1><p>Advanced usage patterns and examples.</p><h2 id="Custom-Templates"><a class="docs-heading-anchor" href="#Custom-Templates">Custom Templates</a><a id="Custom-Templates-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Templates" title="Permalink"></a></h2><h3 id="Corporate-Branding"><a class="docs-heading-anchor" href="#Corporate-Branding">Corporate Branding</a><a id="Corporate-Branding-1"></a><a class="docs-heading-anchor-permalink" href="#Corporate-Branding" title="Permalink"></a></h3><p>Create <code>docs/src/assets/custom.typ</code>:</p><pre><code class="language-typst hljs">#let config = (
+  // Company colors
+  light-blue: rgb(&quot;0066cc&quot;),
+  dark-blue: rgb(&quot;003d7a&quot;),
+
+  // Company fonts
+  text-font: (&quot;Helvetica Neue&quot;, &quot;Arial&quot;),
+  code-font: (&quot;Consolas&quot;, &quot;Courier New&quot;),
+
+  // Larger text for readability
+  text-size: 12pt,
+  code-size: 10pt,
+)
+
+// Company logo function
+#let company-logo() = {
+  image(&quot;logo.png&quot;, width: 3cm)
+}</code></pre><h3 id="Academic-Style"><a class="docs-heading-anchor" href="#Academic-Style">Academic Style</a><a id="Academic-Style-1"></a><a class="docs-heading-anchor-permalink" href="#Academic-Style" title="Permalink"></a></h3><pre><code class="language-typst hljs">#let config = (
+  // Traditional academic styling
+  text-font: (&quot;Times New Roman&quot;, &quot;Liberation Serif&quot;),
+  code-font: (&quot;Courier New&quot;, &quot;Liberation Mono&quot;),
+
+  // Conservative colors
+  light-blue: rgb(&quot;000080&quot;),
+  dark-blue: rgb(&quot;000050&quot;),
+
+  // Larger line spacing
+  text-size: 12pt,
+)
+
+// Citation helper
+#let cite(key) = {
+  text(fill: rgb(&quot;0000ff&quot;))[[#key]]
+}</code></pre><h2 id="Multiple-Output-Formats"><a class="docs-heading-anchor" href="#Multiple-Output-Formats">Multiple Output Formats</a><a id="Multiple-Output-Formats-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-Output-Formats" title="Permalink"></a></h2><p>Generate both HTML and PDF:</p><pre><code class="language-julia hljs"># docs/make.jl
+using Documenter, DocumenterTypst, MyPackage
+
+# Build HTML documentation
+makedocs(
+    sitename = &quot;MyPackage&quot;,
+    format = Documenter.HTML(
+        prettyurls = get(ENV, &quot;CI&quot;, &quot;&quot;) == &quot;true&quot;,
+        canonical = &quot;https://myorg.github.io/MyPackage.jl&quot;,
+    ),
+    pages = [
+        &quot;Home&quot; =&gt; &quot;index.md&quot;,
+        &quot;API&quot; =&gt; &quot;api.md&quot;,
+    ]
+)
+
+deploydocs(
+    repo = &quot;github.com/myorg/MyPackage.jl&quot;,
+    devbranch = &quot;main&quot;,
+)
+
+# Build PDF documentation
+makedocs(
+    sitename = &quot;MyPackage&quot;,
+    format = DocumenterTypst.Typst(
+        version = get(ENV, &quot;GITHUB_REF_NAME&quot;, &quot;dev&quot;),
+    ),
+    pages = [
+        &quot;Home&quot; =&gt; &quot;index.md&quot;,
+        &quot;API&quot; =&gt; &quot;api.md&quot;,
+    ]
+)
+
+# Upload PDF as artifact in CI
+if get(ENV, &quot;CI&quot;, &quot;&quot;) == &quot;true&quot;
+    cp(&quot;docs/build/MyPackage.pdf&quot;, &quot;MyPackage-$(get(ENV, &quot;GITHUB_REF_NAME&quot;, &quot;dev&quot;)).pdf&quot;)
+end</code></pre><h2 id="Conditional-Content"><a class="docs-heading-anchor" href="#Conditional-Content">Conditional Content</a><a id="Conditional-Content-1"></a><a class="docs-heading-anchor-permalink" href="#Conditional-Content" title="Permalink"></a></h2><p>Show different content for PDF vs HTML:</p><pre><code class="language-markdown hljs">@raw html
+
+&lt;div class=&quot;only-html&quot;&gt;
+  &lt;iframe src=&quot;https://example.com/interactive&quot;&gt;&lt;/iframe&gt;
+&lt;/div&gt;</code></pre><pre><code class="language-typst hljs">@raw typst
+#text(fill: red)[This appears only in PDF]
+```</code></pre><p>Or use metadata:</p><pre><code class="language-markdown hljs">```@meta
+Format = Typst
+```
+
+This content only appears in PDF builds.
+
+```
+
+```</code></pre><h2 id="Advanced-Math"><a class="docs-heading-anchor" href="#Advanced-Math">Advanced Math</a><a id="Advanced-Math-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Math" title="Permalink"></a></h2><h3 id="Complex-Equations"><a class="docs-heading-anchor" href="#Complex-Equations">Complex Equations</a><a id="Complex-Equations-1"></a><a class="docs-heading-anchor-permalink" href="#Complex-Equations" title="Permalink"></a></h3><pre><code class="language-markdown hljs">```math
+\begin{align}
+  E &amp;= mc^2 \\
+  F &amp;= ma \\
+  \Delta S &amp;\geq 0
+\end{align}
+```</code></pre><h3 id="Custom-Math-Macros"><a class="docs-heading-anchor" href="#Custom-Math-Macros">Custom Math Macros</a><a id="Custom-Math-Macros-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Math-Macros" title="Permalink"></a></h3><p>In <code>custom.typ</code>:</p><pre><code class="language-typst hljs">// Define reusable math functions (Note: $ is Typst math delimiter)
+#let bra(x) = [⟨#x|]
+#let ket(x) = [|#x⟩]
+#let braket(x, y) = [⟨#x|#y⟩]</code></pre><h2 id="Performance-Optimization"><a class="docs-heading-anchor" href="#Performance-Optimization">Performance Optimization</a><a id="Performance-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Optimization" title="Permalink"></a></h2><h3 id="Caching-in-CI"><a class="docs-heading-anchor" href="#Caching-in-CI">Caching in CI</a><a id="Caching-in-CI-1"></a><a class="docs-heading-anchor-permalink" href="#Caching-in-CI" title="Permalink"></a></h3><pre><code class="language-yaml hljs"># .github/workflows/docs.yml
+- name: Cache Julia packages
+  uses: actions/cache@v4
+  with:
+    path: |
+      ~/.julia/packages
+      ~/.julia/artifacts
+    key: julia-pkgs-${{ runner.os }}-${{ hashFiles(&#39;docs/Project.toml&#39;) }}
+
+- name: Cache Typst fonts
+  uses: actions/cache@v4
+  with:
+    path: ~/.cache/typst
+    key: typst-fonts-${{ runner.os }}</code></pre><h3 id="Parallel-Builds"><a class="docs-heading-anchor" href="#Parallel-Builds">Parallel Builds</a><a id="Parallel-Builds-1"></a><a class="docs-heading-anchor-permalink" href="#Parallel-Builds" title="Permalink"></a></h3><p>Build multiple versions in parallel:</p><pre><code class="language-yaml hljs">strategy:
+  matrix:
+    version: [&quot;stable&quot;, &quot;dev&quot;, &quot;v1.0.0&quot;]
+steps:
+  - name: Build ${{ matrix.version }}
+    run: |
+      VERSION=${{ matrix.version }} julia docs/make.jl
+      mv docs/build/Package.pdf Package-${{ matrix.version }}.pdf</code></pre><h2 id="Integration-with-Other-Tools"><a class="docs-heading-anchor" href="#Integration-with-Other-Tools">Integration with Other Tools</a><a id="Integration-with-Other-Tools-1"></a><a class="docs-heading-anchor-permalink" href="#Integration-with-Other-Tools" title="Permalink"></a></h2><h3 id="Pre-commit-Hook"><a class="docs-heading-anchor" href="#Pre-commit-Hook">Pre-commit Hook</a><a id="Pre-commit-Hook-1"></a><a class="docs-heading-anchor-permalink" href="#Pre-commit-Hook" title="Permalink"></a></h3><p><code>.git/hooks/pre-commit</code>:</p><pre><code class="language-bash hljs">#!/bin/bash
+# Build docs before committing
+
+julia --project=docs -e &#39;
+  using Pkg
+  Pkg.instantiate()
+  include(&quot;docs/make.jl&quot;)
+&#39; || exit 1
+
+echo &quot;Documentation built successfully&quot;</code></pre><h3 id="Build-Automation-with-Just"><a class="docs-heading-anchor" href="#Build-Automation-with-Just">Build Automation with Just</a><a id="Build-Automation-with-Just-1"></a><a class="docs-heading-anchor-permalink" href="#Build-Automation-with-Just" title="Permalink"></a></h3><p><code>justfile</code>:</p><pre><code class="language-just hljs"># Build both HTML and PDF documentation
+docs: docs-html docs-pdf
+
+# Build HTML documentation
+docs-html:
+    julia --project=docs -e &#39;using Pkg; Pkg.instantiate(); include(&quot;docs/make_html.jl&quot;)&#39;
+
+# Build PDF documentation
+docs-pdf:
+    julia --project=docs -e &#39;using Pkg; Pkg.instantiate(); include(&quot;docs/make_pdf.jl&quot;)&#39;
+
+# Clean build artifacts
+clean:
+    julia -e &#39;rm(&quot;docs/build&quot;, recursive=true, force=true)&#39;</code></pre><p><strong>Note</strong>: <a href="https://github.com/casey/just">just</a> is a cross-platform command runner that works on Windows, Linux, and macOS.</p><h2 id="Debugging"><a class="docs-heading-anchor" href="#Debugging">Debugging</a><a id="Debugging-1"></a><a class="docs-heading-anchor-permalink" href="#Debugging" title="Permalink"></a></h2><h3 id="Inspect-Generated-Typst"><a class="docs-heading-anchor" href="#Inspect-Generated-Typst">Inspect Generated Typst</a><a id="Inspect-Generated-Typst-1"></a><a class="docs-heading-anchor-permalink" href="#Inspect-Generated-Typst" title="Permalink"></a></h3><pre><code class="language-julia hljs">using DocumenterTypst
+
+# Generate source only
+makedocs(
+    format = DocumenterTypst.Typst(platform = &quot;none&quot;),
+    ...
+)
+
+# Manually compile with custom options
+run(`typst compile docs/build/Package.typ --font-path /custom/fonts`)</code></pre><h3 id="Profile-Compilation"><a class="docs-heading-anchor" href="#Profile-Compilation">Profile Compilation</a><a id="Profile-Compilation-1"></a><a class="docs-heading-anchor-permalink" href="#Profile-Compilation" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Profile
+
+@profiler makedocs(
+    format = DocumenterTypst.Typst(),
+    ...
+)</code></pre><h2 id="Migration-Examples"><a class="docs-heading-anchor" href="#Migration-Examples">Migration Examples</a><a id="Migration-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Migration-Examples" title="Permalink"></a></h2><h3 id="From-LaTeX-Backend"><a class="docs-heading-anchor" href="#From-LaTeX-Backend">From LaTeX Backend</a><a id="From-LaTeX-Backend-1"></a><a class="docs-heading-anchor-permalink" href="#From-LaTeX-Backend" title="Permalink"></a></h3><p><strong>Before</strong> (<code>docs/make.jl</code>):</p><pre><code class="language-julia hljs">using Documenter, MyPackage
+
+makedocs(
+    format = Documenter.LaTeX(),
+    ...
+)</code></pre><p><strong>After</strong>:</p><pre><code class="language-julia hljs">using Documenter, DocumenterTypst, MyPackage
+
+makedocs(
+    format = DocumenterTypst.Typst(),
+    ...
+)</code></pre><p>No changes needed to markdown files!</p><h3 id="From-Manual-PDF-Generation"><a class="docs-heading-anchor" href="#From-Manual-PDF-Generation">From Manual PDF Generation</a><a id="From-Manual-PDF-Generation-1"></a><a class="docs-heading-anchor-permalink" href="#From-Manual-PDF-Generation" title="Permalink"></a></h3><p><strong>Before</strong>: Complex LaTeX setup with custom templates</p><p><strong>After</strong>: Simple Typst configuration</p><pre><code class="language-julia hljs">makedocs(
+    format = DocumenterTypst.Typst(),
+    ...
+)</code></pre><p>Add <code>docs/src/assets/custom.typ</code> for styling.</p><h2 id="Real-World-Examples"><a class="docs-heading-anchor" href="#Real-World-Examples">Real-World Examples</a><a id="Real-World-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Real-World-Examples" title="Permalink"></a></h2><p>See these projects using DocumenterTypst:</p><ul><li><a href="https://github.com/user/Example1.jl">Example1.jl</a> - Basic usage</li><li><a href="https://github.com/user/Example2.jl">Example2.jl</a> - Custom styling</li><li><a href="https://github.com/user/Example3.jl">Example3.jl</a> - Multiple formats</li></ul><h2 id="Best-Practices"><a class="docs-heading-anchor" href="#Best-Practices">Best Practices</a><a id="Best-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Best-Practices" title="Permalink"></a></h2><ol><li><strong>Version Control</strong> - Track <code>custom.typ</code> in git</li><li><strong>Test Locally</strong> - Build before pushing</li><li><strong>Use Caching</strong> - Speed up CI builds</li><li><strong>Pin Versions</strong> - Specify Documenter version in compat</li><li><strong>Document Changes</strong> - Keep CHANGELOG.md updated</li></ol><h2 id="Tips-and-Tricks"><a class="docs-heading-anchor" href="#Tips-and-Tricks">Tips &amp; Tricks</a><a id="Tips-and-Tricks-1"></a><a class="docs-heading-anchor-permalink" href="#Tips-and-Tricks" title="Permalink"></a></h2><h3 id="Quick-Preview"><a class="docs-heading-anchor" href="#Quick-Preview">Quick Preview</a><a id="Quick-Preview-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Preview" title="Permalink"></a></h3><pre><code class="language-bash hljs"># Fast iteration during development
+julia --project=docs -e &#39;
+  using DocumenterTypst
+  makedocs(
+    format = DocumenterTypst.Typst(platform = &quot;none&quot;),
+    doctest = false,
+  )
+&#39;
+cd docs/build &amp;&amp; typst watch Package.typ</code></pre><h3 id="Conditional-Debugging"><a class="docs-heading-anchor" href="#Conditional-Debugging">Conditional Debugging</a><a id="Conditional-Debugging-1"></a><a class="docs-heading-anchor-permalink" href="#Conditional-Debugging" title="Permalink"></a></h3><pre><code class="language-julia hljs">debug_mode = get(ENV, &quot;DEBUG&quot;, &quot;false&quot;) == &quot;true&quot;
+
+makedocs(
+    format = DocumenterTypst.Typst(
+        platform = debug_mode ? &quot;none&quot; : &quot;typst&quot;
+    ),
+    ...
+)
+
+if debug_mode
+    ENV[&quot;DOCUMENTER_TYPST_DEBUG&quot;] = &quot;debug&quot;
+end</code></pre><h3 id="Custom-PDF-Name"><a class="docs-heading-anchor" href="#Custom-PDF-Name">Custom PDF Name</a><a id="Custom-PDF-Name-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-PDF-Name" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Generate with custom name
+makedocs(format = DocumenterTypst.Typst(), ...)
+cp(&quot;docs/build/Package.pdf&quot;, &quot;custom-name.pdf&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../basic/">« Basic Usage</a><a class="docs-footer-nextpage" href="../migration/">Migration from LaTeX »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 28 December 2025 06:24">Sunday 28 December 2025</span>. Using Julia version 1.12.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
