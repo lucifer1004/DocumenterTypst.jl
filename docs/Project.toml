@@ -5,7 +5,7 @@ DocumenterTypst = "d7fd56dd-41bc-4b2d-b658-79a5840b2e09"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [sources]
-DocumenterTypst = {path = "/Users/zihuaw/com.github/lucifer1004/DocumenterTypst"}
+DocumenterTypst = {path = ".."}
 
 [compat]
 Documenter = "1"

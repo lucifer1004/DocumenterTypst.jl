@@ -13,7 +13,7 @@ test:
 # Platforms: typst (default), native, docker, none
 test-backend platform="typst":
     @echo "Running Typst backend tests with platform: {{platform}}"
-    julia --project=test/typst_backend -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+    julia --project=test/typst_backend -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
     julia --project=test/typst_backend -e 'ENV["TYPST_PLATFORM"]="{{platform}}"; include("test/typst_backend/runtests.jl")'
 
 # Format code with Runic
@@ -22,13 +22,13 @@ format:
 
 # Build HTML documentation
 docs:
-    julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); include("docs/make.jl")'
+    julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate(); include("docs/make.jl")'
 
 # Build Typst/PDF documentation
 # Platforms: typst (default), native, docker, none
 docs-typst platform="typst":
     @echo "Building Typst documentation with platform: {{platform}}"
-    julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+    julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
     julia --project=docs docs/make.jl typst {if platform == "typst" {""} else {platform}}
 
 # Generate changelog for docs
@@ -46,7 +46,7 @@ clean:
 
 # Install package in dev mode
 dev:
-    julia --project -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+    julia --project -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
 
 # Run tests with coverage (for CI)
 ci-test:
