@@ -68,7 +68,7 @@ jobs:
           include("docs/make.jl")
 
       - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: documenter-html
           path: docs/build/
