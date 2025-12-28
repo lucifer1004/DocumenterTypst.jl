@@ -48,6 +48,7 @@ For detailed instructions, see [`RUNNING_TESTS.md`](RUNNING_TESTS.md).
 ## Test Coverage
 
 These tests verify:
+
 - All platform options work correctly
 - PDF generation succeeds (except `none`)
 - `.typ` source files are valid
@@ -55,4 +56,3 @@ These tests verify:
 - Cross-references and links
 - Images and tables
 - Multi-page documents
-

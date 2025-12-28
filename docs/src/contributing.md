@@ -102,6 +102,7 @@ TYPST_PLATFORM=typst julia --project=test/typst_backend test/typst_backend/runte
 ```
 
 Available platforms:
+
 - **`typst`** (default): Uses `Typst_jll.jl`, automatic cross-platform
 - **`native`**: Uses system-installed `typst` command
 - **`none`**: Only generates `.typ` files, no PDF compilation (fastest, recommended for development)
