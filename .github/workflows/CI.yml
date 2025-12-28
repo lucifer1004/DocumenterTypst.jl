@@ -1,42 +1,323 @@
+# Detailed CI workflow for DocumenterTypst
+#
+# This workflow demonstrates a complete CI setup with:
+# - Multi-platform testing
+# - Code coverage
+# - Documentation building
+# - PDF artifact uploads
+# - Automated releases
+
 name: CI
+
 on:
   push:
     branches:
       - main
-    tags: ['*']
+    tags: ["*"]
   pull_request:
   workflow_dispatch:
+
 concurrency:
-  # Skip intermediate builds: always.
-  # Cancel intermediate builds: only if it is a pull request build.
+  # Cancel intermediate builds on new pushes to save CI resources
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
+  # Check for changelog updates on PRs
+  changelog:
+    name: Check Changelog
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: "CHANGELOG.md"
+          skipLabels: "Skip Changelog,dependencies"
+
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
-    permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
-      actions: write
+    permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
         version:
-          - '1.10'
-          - '1.12'
-          - '1.6'
-          - 'pre'
+          - "1.10" # Minimum supported version
+          - "1.12"
+          - "latest" # Latest stable 1.x release
         os:
           - ubuntu-latest
+          - macos-latest
+          - windows-latest
         arch:
           - x64
+        exclude:
+          # Reduce redundancy: test old Julia only on Linux
+          - os: macos-latest
+            version: "1.10"
+          - os: windows-latest
+            version: "1.10"
     steps:
-      - uses: actions/checkout@v6
-      - uses: julia-actions/setup-julia@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+
+      - name: Cache Julia packages
+        uses: julia-actions/cache@v2
+        with:
+          cache-name: julia-pkgs-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.version }}
+          cache-registries: "true"
+          cache-artifacts: "true"
+          cache-packages: "true"
+
+      - name: Build package
+        uses: julia-actions/julia-buildpkg@v1
+
+      - name: Run tests
+        uses: julia-actions/julia-runtest@v1
+        with:
+          coverage: ${{ matrix.os == 'ubuntu-latest' && matrix.version == '1' }}
+
+      - name: Process coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
+        uses: julia-actions/julia-processcoverage@v1
+        with:
+          directories: src
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload coverage to Coveralls
+        if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: lcov.info
+          parallel: false
+
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+      statuses: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1" # Use latest stable
+
+      - name: Cache Julia packages (docs)
+        uses: julia-actions/cache@v2
+        with:
+          cache-name: julia-docs-pkgs
+          cache-registries: "true"
+
+      - name: Install documentation dependencies
+        run: |
+          julia --project=docs -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+
+      - name: Build and deploy documentation
+        uses: julia-actions/julia-docdeploy@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          GKSwstype: "100" # For Plots.jl if used
+          JULIA_DEBUG: "Documenter"
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documentation-html
+          path: docs/build/
+          retention-days: 7
+
+  format-check:
+    name: Code Format Check (JuliaFormatter)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - name: Install JuliaFormatter
+        run: julia -e 'using Pkg; Pkg.add("JuliaFormatter")'
+
+      - name: Check code formatting
+        run: |
+          julia -e '
+            using JuliaFormatter
+            formatted = format(".", verbose=true, style=BlueStyle())
+            if formatted
+              @error "Code not formatted properly. Run: julia -e \"using JuliaFormatter; format(\\\".\\\")\" "
+              exit(1)
+            end
+          '
+
+  # Optional: Aqua.jl quality assurance
+  quality-assurance:
+    name: Quality Assurance (Aqua.jl)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - name: Install Aqua
+        run: |
+          julia --project -e '
+            using Pkg
+            Pkg.add("Aqua")
+            Pkg.instantiate()'
+
+      - name: Run Aqua tests
+        run: |
+          julia --project -e '
+            using Aqua, DocumenterTypst
+            Aqua.test_all(DocumenterTypst; 
+              ambiguities=false,  # Documenter has some intentional ambiguities
+              deps_compat=true,
+              stale_deps=true,
+              unbound_args=true,
+              undefined_exports=true,
+            )'
+
+  # Generate release artifacts on tags
+  release:
+    name: Create Release Assets
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [test, docs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create release notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## DocumenterTypst ${{ steps.get_version.outputs.VERSION }}
+
+          ### Installation
+
+          \`\`\`julia
+          using Pkg
+          Pkg.add(name="DocumenterTypst", version="${{ steps.get_version.outputs.VERSION }}")
+          \`\`\`
+
+          ### Documentation
+
+          - [Stable Documentation](https://lucifer1004.github.io/DocumenterTypst.jl/stable/)
+          - [API Reference](https://lucifer1004.github.io/DocumenterTypst.jl/stable/api/reference/)
+
+          ### Changes
+
+          See [CHANGELOG.md](https://github.com/lucifer1004/DocumenterTypst.jl/blob/main/CHANGELOG.md) for details.
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'rc') || contains(steps.get_version.outputs.VERSION, 'beta') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Notify on failure
+  notify-failure:
+    name: Notify on Failure
+    needs: [test, docs]
+    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create issue on failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `CI Failure on main: ${context.payload.head_commit.message.split('\n')[0]}`;
+            const body = `
+            CI failed on main branch.
+
+            **Commit**: ${context.sha}
+            **Author**: ${context.payload.head_commit.author.name}
+            **Message**: ${context.payload.head_commit.message}
+
+            **Workflow Run**: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+
+            Please investigate and fix.
+            `;
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'CI-failure',
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['CI-failure', 'bug'],
+              });
+            }

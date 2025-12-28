@@ -1,0 +1,123 @@
+# Compatibility check workflow
+#
+# Tests against Documenter.jl nightly/main to catch breaking changes early
+
+name: Compat Check
+
+on:
+  schedule:
+    # Run weekly on Mondays at 00:00 UTC
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+jobs:
+  test-documenter-main:
+    name: Test with Documenter#main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true # Don't fail CI if this fails
+    permissions:
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - name: Install Documenter#main
+        run: |
+          julia --project -e '
+            using Pkg
+            Pkg.add(name="Documenter", rev="main")
+            Pkg.instantiate()
+            Pkg.build()'
+
+      - name: Run tests
+        id: test
+        continue-on-error: true
+        run: julia --project -e 'using Pkg; Pkg.test()'
+
+      - name: Create issue on failure
+        if: steps.test.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Compatibility issue with Documenter.jl main branch';
+            const body = `
+            ## ⚠️ Compatibility Check Failed
+
+            Tests failed when using \`Documenter#main\` (development version).
+
+            **Workflow Run**: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+            **Date**: ${new Date().toISOString()}
+
+            This may indicate:
+            1. Upcoming breaking changes in Documenter.jl
+            2. Internal API changes we depend on
+            3. Transient CI issues
+
+            **Action Items**:
+            - [ ] Review Documenter.jl recent commits
+            - [ ] Check if this is a known breaking change
+            - [ ] Update DocumenterTypst if needed
+            - [ ] Open issue with Documenter.jl if bug
+
+            /cc @lucifer1004
+            `;
+
+            // Check for existing open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'compat-check',
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['compat-check', 'needs-investigation'],
+              });
+            } else {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `Still failing as of ${new Date().toISOString()}\n\nWorkflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              });
+            }
+
+      - name: Close issue on success
+        if: steps.test.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'compat-check',
+            });
+
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ Compatibility restored as of ${new Date().toISOString()}\n\nClosing this issue.`,
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+            }
