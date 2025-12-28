@@ -195,7 +195,7 @@ For detailed guidelines, see [CONTRIBUTING](docs/src/contributing.md).
 
 ```bash
 # Clone and setup
-git clone https://github.com/lucifer1004/DocumenterTypst.jl.git
+git clone https://github.com/lucifer1004/DocumenterTypst.jl
 cd DocumenterTypst.jl
 just dev
 

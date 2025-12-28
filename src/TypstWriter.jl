@@ -369,7 +369,9 @@ function typst_fileprefix(doc::Documenter.Document, settings::Typst)
     return replace(fileprefix, " " => "")
 end
 
-const DOCKER_IMAGE_TAG = "0.1"
+# Default Docker image tag for Typst compiler
+# Uses official Typst Docker images from GitHub Container Registry
+const DOCKER_IMAGE_TAG = "latest"
 
 # ============================================================================
 # Typst compilation backends
@@ -440,35 +442,23 @@ function compile(c::DockerCompiler, fileprefix::String)
     Sys.which("docker") === nothing && error("docker command not found")
     @info "TypstWriter: using docker to compile typ."
 
-    # Use current user's UID:GID for Docker to avoid permission issues
-    uid_gid = @static if Sys.iswindows()
-        # Windows doesn't have UIDs, Docker Desktop handles this differently
-        "1000:1000"
-    else
-        # Get UID and GID using shell commands for maximum compatibility
-        uid = strip(read(`id -u`, String))
-        gid = strip(read(`id -g`, String))
-        "$(uid):$(gid)"
-    end
-
     workdir = "/work"
-    script = """
-    cd $(workdir)
-    typst compile $(fileprefix).typ
-    """
+
+    # Use official Typst Docker image
+    # c.image_tag can be "latest" or a specific version like "0.12.0"
+    docker_image = "ghcr.io/typst/typst:$(c.image_tag)"
 
     try
+        # Run typst directly in the mounted directory
+        # :Z flag for SELinux compatibility (no-op on non-SELinux systems)
         piperun(
-            `docker run -itd -u $(uid_gid) --name typst-container -v $(pwd()):$(workdir) --rm juliadocs/documenter-Typst:$(c.image_tag)`;
+            `docker run --rm -v $(pwd()):$(workdir):Z -w $(workdir) $(docker_image) compile $(fileprefix).typ`;
             clearlogs = true
         )
-        piperun(`docker exec typst-container bash -c $(script)`)
         return true
-    finally
-        try
-            piperun(`docker stop typst-container`)
-        catch
-        end
+    catch e
+        @error "Docker compilation failed" exception = e
+        return false
     end
 end
 

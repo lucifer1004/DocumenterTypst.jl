@@ -127,7 +127,7 @@ julia docs/make.jl
 
 Output location will be printed:
 
-```
+```text
 ┌ Info: Typst sources copied for debugging to /path/to/typst-debug
 ```
 

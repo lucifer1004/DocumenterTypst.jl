@@ -42,7 +42,7 @@ This generates a PDF in `docs/build/YourPackage.pdf`.
 
 ### Directory Structure
 
-```
+```text
 YourPackage/
 ├── src/
 │   └── YourPackage.jl

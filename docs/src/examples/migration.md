@@ -114,14 +114,14 @@ LaTeX math **just works** - no changes needed!
 
 **LaTeX**:
 
-```
+```text
 ! Undefined control sequence.
 l.42 \mysterycommand
 ```
 
 **Typst**:
 
-```
+```text
 error: unknown variable: mysterycommand
   ┌─ document.typ:42:2
   │

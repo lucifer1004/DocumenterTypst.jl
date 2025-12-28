@@ -191,7 +191,7 @@ end
 
 1. **Check file location**:
 
-   ```
+   ```text
    docs/src/assets/custom.typ  # ✅
    docs/assets/custom.typ       # ❌
    ```

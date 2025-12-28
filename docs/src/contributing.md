@@ -288,11 +288,13 @@ Include:
 - **Expected behavior**: What should happen
 - **Actual behavior**: What actually happens
 - **Environment**:
-  ```
+
+  ```text
   Julia version:
   DocumenterTypst version:
   OS:
   ```
+
 - **Minimal example**: Complete code to reproduce
 
 ### Feature Requests
@@ -368,7 +370,7 @@ Pkg.test("DocumenterTypst")
 
 4. Register with JuliaRegistrator:
 
-   ```
+   ```text
    @JuliaRegistrator register
    ```
 
