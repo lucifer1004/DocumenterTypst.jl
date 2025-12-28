@@ -95,38 +95,6 @@ if get(ENV, "CI", "") == "true"
 end
 ```
 
-## Conditional Content
-
-Show different content for PDF vs HTML:
-
-```markdown
-@raw html
-
-<div class="only-html">
-  <iframe src="https://example.com/interactive"></iframe>
-</div>
-```
-
-````typst
-@raw typst
-#text(fill: red)[This appears only in PDF]
-```
-````
-
-Or use metadata:
-
-````markdown
-```@meta
-Format = Typst
-```
-
-This content only appears in PDF builds.
-
-```
-
-```
-````
-
 ## Advanced Math
 
 ### Complex Equations

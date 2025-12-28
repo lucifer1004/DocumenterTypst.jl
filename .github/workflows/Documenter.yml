@@ -58,14 +58,11 @@ jobs:
           Pkg.instantiate()
 
       - name: Build HTML documentation
-        shell: julia --color=yes --project=docs {0}
-        run: |
-          # Set environment for docs build
-          ENV["DOCUMENTER_KEY"] = get(ENV, "DOCUMENTER_KEY", "")
-          ENV["GITHUB_TOKEN"] = get(ENV, "GITHUB_TOKEN", "")
-          ENV["JULIA_DEBUG"] = "Documenter"
-
-          include("docs/make.jl")
+        env:
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JULIA_DEBUG: Documenter
+        run: julia --color=yes --project=docs docs/make.jl
 
       - name: Upload documentation artifacts
         uses: actions/upload-artifact@v4
