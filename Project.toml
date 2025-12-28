@@ -14,7 +14,7 @@ MarkdownAST = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
 Typst_jll = "eb4b1da6-20f6-5c66-9826-fdb8ad410d0e"
 
 [compat]
-ANSIColoredPrinters = "0"
+ANSIColoredPrinters = "0.0.1"
 Documenter = "1"
 Markdown = "1"
 MarkdownAST = "0.1"

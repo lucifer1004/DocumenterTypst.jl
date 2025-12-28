@@ -138,6 +138,37 @@ You can customize the PDF appearance by creating a custom template:
 )
 ```
 
+### Custom Title Pages
+
+Replace the default title page with your own design:
+
+```typst
+// src/assets/custom.typ
+
+#let config = (
+  skip-default-titlepage: true,  // Skip default title page
+  // ... other config
+)
+
+// Your custom title page
+#page(
+  header: none,
+  footer: none,
+  numbering: none,
+)[
+  #align(center)[
+    #v(3cm)
+    #image("logo.png", width: 150pt)
+    #v(2cm)
+    #text(size: 48pt)[My Package]
+  ]
+]
+
+#pagebreak()
+```
+
+For more details, see the [Custom Styling Guide](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/styling/).
+
 ## Advanced Features
 
 ### Custom Template Location

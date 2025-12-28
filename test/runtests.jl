@@ -581,10 +581,11 @@ end
                 remotes = nothing
             )
 
-            # custom.typ should be copied to build dir with exact content
-            @test isfile(joinpath(dir, "build", "custom.typ"))
-            custom_content = read(joinpath(dir, "build", "custom.typ"), String)
-            @test contains(custom_content, "Custom Typst config")
+            # custom.typ content should be embedded in the generated .typ file
+            typfile = joinpath(dir, "build", "CustomTest.typ")
+            @test isfile(typfile)
+            typ_content = read(typfile, String)
+            @test contains(typ_content, "Custom Typst config")
         end
     end
 
