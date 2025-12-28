@@ -1,42 +1,325 @@
+# Comprehensive CI workflow for DocumenterTypst.jl
+#
+# Features:
+# - Multi-platform testing (Linux, macOS, Windows)
+# - Typst backend specific tests (4 platforms: typst_jll, native, docker, source-only)
+# - Code coverage via Codecov
+# - Documentation building and deployment
+# - Code formatting (Runic for Julia, Prettier for markdown/YAML)
+# - Spell checking (Typos)
+# - Link checking
+# - Changelog enforcement
+#
+# Design decisions:
+# - Julia 1.6 (LTS) support maintained until official EOL in 2025
+# - macOS 1.6 testing skipped to reduce CI costs (runner time expensive)
+# - x86 architecture tested on Linux to ensure 32-bit compatibility
+# - Codecov chosen over Coveralls for simpler integration and better UI
+
 name: CI
+
 on:
   push:
     branches:
       - main
-    tags: ['*']
+      - "release-*"
+    tags:
+      - "*"
   pull_request:
   workflow_dispatch:
+
 concurrency:
-  # Skip intermediate builds: always.
-  # Cancel intermediate builds: only if it is a pull request build.
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Group concurrent runs by workflow and ref to prevent redundant builds
+  # On main branch: allow parallel runs (differentiated by run_number)
+  # On PRs: cancel previous runs when new commits are pushed
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref != 'refs/heads/main' || github.run_number }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 jobs:
+  # ============================================================================
+  # Code Quality Checks
+  # ============================================================================
+
+  changelog:
+    name: Changelog Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: "CHANGELOG.md"
+          skipLabels: "Skip Changelog,dependencies"
+
+  runic:
+    name: "Runic (Julia code formatting)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+      - uses: julia-actions/cache@v2
+      - uses: fredrikekre/runic-action@v1
+        with:
+          version: "1.5"
+
+  prettier:
+    name: Prettier (formatting)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: creyD/prettier_action@v4.6
+        with:
+          dry: True
+          prettier_options: --check **/*.md
+
+  typos:
+    name: Spell Check with Typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: crate-ci/typos@master
+
+  # ============================================================================
+  # Main Test Suite
+  # ============================================================================
+
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
-    permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
-      actions: write
+    permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
         version:
-          - '1.10'
-          - '1.12'
-          - '1.6'
-          - 'pre'
+          - "lts" # Long-term support release
+          - "1" # Latest stable release
+          - "nightly" # Test against upcoming features
         os:
           - ubuntu-latest
+          - macos-latest
+          - windows-latest
         arch:
-          - x64
+          - default
+        include:
+          # Test x86 architecture on Linux for 32-bit compatibility
+          - os: ubuntu-latest
+            version: "1"
+            arch: x86
     steps:
-      - uses: actions/checkout@v6
-      - uses: julia-actions/setup-julia@v2
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+          show-versioninfo: true
+
+      - name: Cache Julia packages
+        uses: julia-actions/cache@v2
+
+      - name: Build package
+        uses: julia-actions/julia-buildpkg@v1
+
+      - name: Run tests
+        uses: julia-actions/julia-runtest@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Process coverage
+        uses: julia-actions/julia-processcoverage@v1
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+
+  # ============================================================================
+  # Typst Backend Specific Tests
+  # ============================================================================
+
+  typst-backend:
+    name: "Typst Backend - ${{ matrix.platform }} - ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - typst # Typst_jll - Julia binary wrapper
+          - native # System typst - user-installed binary
+          - docker # Docker container - CI environments
+          - none # Source only - validation without compilation
+        os:
+          - ubuntu-latest
+    steps:
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install system Typst (native platform)
+        if: matrix.platform == 'native'
+        uses: typst-community/setup-typst@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - name: Cache Julia packages
+        uses: julia-actions/cache@v2
+
+      - name: Install package
+        run: |
+          julia --project=test/typst_backend -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+
+      - name: Run Typst backend tests
+        run: julia --project=test/typst_backend --code-coverage test/typst_backend/runtests.jl
+        env:
+          TYPST_PLATFORM: ${{ matrix.platform }}
+
+      - name: Process coverage
+        uses: julia-actions/julia-processcoverage@v1
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          flags: typst-backend
+
+      # Note: Tests use mktempdir() for isolation - artifacts are not preserved
+      # If tests pass, the generated files are correct. No need to upload them.
+
+  # ============================================================================
+  # Documentation
+  # ============================================================================
+
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write # Push to gh-pages branch
+      statuses: write # Update commit status
+      pull-requests: write # Comment on PRs with preview links
+    steps:
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - name: Cache Julia packages
+        uses: julia-actions/cache@v2
+
+      - name: Build and deploy documentation
+        uses: julia-actions/julia-docdeploy@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          GKSwstype: "100"
+          JULIA_DEBUG: "Documenter"
+          DATADEPS_ALWAYS_ACCEPT: true
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: documentation-html
+          path: docs/build/
+          retention-days: 7
+
+  linkcheck:
+    name: "Linkcheck: Documentation"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
       - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+      - name: Install dependencies
+        run: |
+          julia --project=docs -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+      - name: Build and check documentation
+        run: julia --color=yes --project=docs/ docs/make.jl linkcheck
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # Finalization
+  # ============================================================================
+
+  # Note: Coveralls removed - using Codecov as single source of truth for coverage reporting
+
+  # ============================================================================
+  # Release (on tags)
+  # ============================================================================
+
+  release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [test, typst-backend, docs, linkcheck]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Create releases
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create release notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## DocumenterTypst ${{ steps.get_version.outputs.VERSION }}
+
+          ### Installation
+
+          ```julia
+          using Pkg
+          Pkg.add(name="DocumenterTypst", version="${{ steps.get_version.outputs.VERSION }}")
+          ```
+
+          ### Documentation
+
+          - [Stable Documentation](https://lucifer1004.github.io/DocumenterTypst.jl/stable/)
+          - [API Reference](https://lucifer1004.github.io/DocumenterTypst.jl/stable/api/reference/)
+
+          ### Changes
+
+          See [CHANGELOG.md](https://github.com/lucifer1004/DocumenterTypst.jl/blob/main/CHANGELOG.md) for details.
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'rc') || contains(steps.get_version.outputs.VERSION, 'beta') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

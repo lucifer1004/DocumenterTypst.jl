@@ -1,0 +1,26 @@
+# Enforces the update of a changelog file on every pull request
+# Can be skipped with the `Skip Changelog` label
+name: Changelog Update Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check for changelog update
+        uses: dangoslen/changelog-enforcer@v3
+        with:
+          changeLogPath: "CHANGELOG.md"
+          skipLabels: "Skip Changelog,dependencies"
+          missingUpdateErrorMessage: |
+            No changelog entry found. 
+
+            Please add an entry to CHANGELOG.md under the "Unreleased" section.
+
+            If this PR doesn't require a changelog entry (e.g. documentation typo fix), 
+            add the "Skip Changelog" label.

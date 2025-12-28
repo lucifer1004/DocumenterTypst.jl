@@ -1,0 +1,11 @@
+[default.extend-words]
+# Technical terms that are not typos
+Typst = "Typst"
+mitex = "mitex"
+jll = "jll"
+autodocs = "autodocs"
+makedocs = "makedocs"
+deploydocs = "deploydocs"
+doctest = "doctest"
+ket = "ket"
+braket = "braket"

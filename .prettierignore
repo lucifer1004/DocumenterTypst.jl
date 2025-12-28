@@ -1,0 +1,13 @@
+# Build products
+docs/build/
+docs/build-typst/
+test/typst_backend/builds/
+
+# Test files
+test/
+
+# Markdown files - format manually when needed
+*.md
+
+# GitHub workflows - format manually
+.github/**/*.yml

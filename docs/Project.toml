@@ -1,0 +1,11 @@
+[deps]
+Changelog = "5217a498-cd5d-4ec6-b8c2-9b85a09b6e3e"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterTypst = "d7fd56dd-41bc-4b2d-b658-79a5840b2e09"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
+[sources]
+DocumenterTypst = {path = ".."}
+
+[compat]
+Documenter = "1"
