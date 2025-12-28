@@ -2,14 +2,19 @@
 #
 # Features:
 # - Multi-platform testing (Linux, macOS, Windows)
-# - Typst backend specific tests
-# - Code coverage (Codecov + Coveralls)
-# - Documentation building
-# - Code formatting (Runic)
+# - Typst backend specific tests (4 platforms: typst_jll, native, docker, source-only)
+# - Code coverage via Codecov
+# - Documentation building and deployment
+# - Code formatting (Runic for Julia, Prettier for markdown/YAML)
 # - Spell checking (Typos)
 # - Link checking
-# - Prettier formatting
 # - Changelog enforcement
+#
+# Design decisions:
+# - Julia 1.6 (LTS) support maintained until official EOL in 2025
+# - macOS 1.6 testing skipped to reduce CI costs (runner time expensive)
+# - x86 architecture tested on Linux to ensure 32-bit compatibility
+# - Codecov chosen over Coveralls for simpler integration and better UI
 
 name: CI
 
@@ -17,16 +22,17 @@ on:
   push:
     branches:
       - main
-      - 'release-*'
-    tags: '*'
+      - "release-*"
+    tags:
+      - "*"
   pull_request:
   workflow_dispatch:
 
 concurrency:
-  # Improved concurrency control following Documenter.jl pattern
-  # group by workflow and ref; for PRs limit to 1 concurrent job
+  # Group concurrent runs by workflow and ref to prevent redundant builds
+  # On main branch: allow parallel runs (differentiated by run_number)
+  # On PRs: cancel previous runs when new commits are pushed
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref != 'refs/heads/main' || github.run_number }}
-  # Cancel intermediate builds, but only if it is a pull request build
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
@@ -43,8 +49,8 @@ jobs:
     steps:
       - uses: dangoslen/changelog-enforcer@v3
         with:
-          changeLogPath: 'CHANGELOG.md'
-          skipLabels: 'Skip Changelog,dependencies'
+          changeLogPath: "CHANGELOG.md"
+          skipLabels: "Skip Changelog,dependencies"
 
   runic:
     name: "Runic (Julia code formatting)"
@@ -53,11 +59,11 @@ jobs:
       - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
+          version: "1"
       - uses: julia-actions/cache@v2
       - uses: fredrikekre/runic-action@v1
         with:
-          version: '1.5'
+          version: "1.5"
 
   prettier:
     name: Prettier (formatting)
@@ -89,9 +95,9 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.6'  # Minimum supported version
-          - '1'     # Latest stable
-          - 'nightly'
+          - "1.6" # Minimum supported version
+          - "1" # Latest stable release
+          - "nightly" # Test against upcoming features
         os:
           - ubuntu-latest
           - macos-latest
@@ -99,15 +105,16 @@ jobs:
         arch:
           - default
         include:
+          # Test x86 architecture on Linux for 32-bit compatibility
           - os: ubuntu-latest
-            version: '1'
+            version: "1"
             arch: x86
         exclude:
           - os: macos-latest
-            version: '1.6'
+            version: "1.6"
             arch: default
-    continue-on-error: ${{ matrix.allow_failure || false }}
     steps:
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
       - name: Checkout repository
         uses: actions/checkout@v6
 
@@ -138,14 +145,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
 
-      - name: Submit coverage to Coveralls
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: lcov.info
-          flag-name: test-${{ join(matrix.*, '-') }}
-          parallel: true
-
   # ============================================================================
   # Typst Backend Specific Tests
   # ============================================================================
@@ -158,31 +157,25 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - typst     # Typst_jll
-          - native    # System typst
-          - none      # Source only
+          - typst # Typst_jll - Julia binary wrapper
+          - native # System typst - user-installed binary
+          - docker # Docker container - CI environments
+          - none # Source only - validation without compilation
         os:
           - ubuntu-latest
-          - windows-latest
-        exclude:
-          # Native typst not available on Windows in CI
-          - os: windows-latest
-            platform: native
     steps:
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Install system Typst (native platform)
         if: matrix.platform == 'native'
-        run: |
-          curl -fsSL https://github.com/typst/typst/releases/download/v0.12.0/typst-x86_64-unknown-linux-musl.tar.xz | tar -xJ
-          sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
-          typst --version
+        uses: typst-community/setup-typst@v4
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
+          version: "1"
 
       - name: Cache Julia packages
         uses: julia-actions/cache@v2
@@ -209,14 +202,6 @@ jobs:
           files: lcov.info
           flags: typst-backend
 
-      - name: Submit coverage to Coveralls
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: lcov.info
-          flag-name: typst-${{ matrix.platform }}-${{ matrix.os }}
-          parallel: true
-
       - name: Upload Typst artifacts
         if: always()
         uses: actions/upload-artifact@v6
@@ -236,19 +221,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write
-      pages: write
-      id-token: write
-      statuses: write
-      pull-requests: write
+      contents: write # Push to gh-pages branch
+      statuses: write # Update commit status
+      pull-requests: write # Comment on PRs with preview links
     steps:
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
+          version: "1"
 
       - name: Cache Julia packages
         uses: julia-actions/cache@v2
@@ -276,10 +260,11 @@ jobs:
     permissions:
       contents: read
     steps:
+      # Standard Julia CI setup pattern (repeated across jobs due to GitHub Actions limitations)
       - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
+          version: "1"
       - uses: julia-actions/cache@v2
       - name: Install dependencies
         run: |
@@ -296,16 +281,7 @@ jobs:
   # Finalization
   # ============================================================================
 
-  close-coveralls:
-    name: "Close Coveralls Submission"
-    needs: [test, typst-backend]
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2
-        with:
-          parallel-finished: true
+  # Note: Coveralls removed - using Codecov as single source of truth for coverage reporting
 
   # ============================================================================
   # Release (on tags)
@@ -317,7 +293,7 @@ jobs:
     needs: [test, typst-backend, docs, linkcheck]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Create releases
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

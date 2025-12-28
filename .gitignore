@@ -1,5 +1,6 @@
 Manifest*.toml
 /*.md
 !/README.md
+!/CHANGELOG.md
 /docs/build*
 /test/typst_backend/builds/

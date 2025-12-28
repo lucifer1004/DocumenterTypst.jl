@@ -126,8 +126,13 @@ ssh-keygen -t rsa -b 4096 -C "documenter" -f documenter_key -N ""
 # All tests
 julia --project -e 'using Pkg; Pkg.test()'
 
+# Or with just
+just test
+
 # Typst backend tests
-TYPST_PLATFORM=typst julia --project=test/typst_backend test/typst_backend/runtests.jl
+just test-backend         # Use Typst_jll (default)
+just test-backend native  # Use system typst
+just test-backend none    # Generate .typ only (fastest)
 ```
 
 ### Format Code
@@ -160,8 +165,10 @@ just docs
 # With link checking
 julia --project=docs docs/make.jl linkcheck
 
-# Typst/PDF
-just docs-typst
+# Typst/PDF with different platforms
+just docs-typst           # Use Typst_jll (default)
+just docs-typst native    # Use system typst
+just docs-typst none      # Generate .typ source only (no compilation)
 ```
 
 ## CI Best Practices
@@ -213,7 +220,10 @@ typos
 ### Typst Backend Failures
 
 ```bash
-# Run locally with specific platform
+# Run locally with specific platform using just
+just test-backend native
+
+# Or manually
 TYPST_PLATFORM=native julia --project=test/typst_backend test/typst_backend/runtests.jl
 
 # Check artifacts in CI (uploaded for 7 days)

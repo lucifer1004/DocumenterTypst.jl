@@ -81,6 +81,33 @@ using Pkg
 Pkg.test("DocumenterTypst")
 ```
 
+Or with just:
+
+```bash
+just test
+```
+
+### Typst Backend Tests
+
+Test the Typst backend with different platforms:
+
+```bash
+# Using just (recommended)
+just test-backend           # Typst_jll (default)
+just test-backend native    # System typst
+just test-backend none      # Only .typ generation (fastest)
+
+# Manual run
+TYPST_PLATFORM=typst julia --project=test/typst_backend test/typst_backend/runtests.jl
+```
+
+Available platforms:
+- **`typst`** (default): Uses `Typst_jll.jl`, automatic cross-platform
+- **`native`**: Uses system-installed `typst` command
+- **`none`**: Only generates `.typ` files, no PDF compilation (fastest, recommended for development)
+
+See [`test/typst_backend/RUNNING_TESTS.md`](../../test/typst_backend/RUNNING_TESTS.md) for detailed instructions.
+
 ### Adding Tests
 
 When adding new features:
@@ -112,15 +139,24 @@ Pkg.test("DocumenterTypst"; coverage=true)
 ### Building Documentation Locally
 
 ```bash
+# HTML documentation
+just docs
+
+# Or manually
 julia --project=docs -e '
   using Pkg
   Pkg.develop(PackageSpec(path=pwd()))
   Pkg.instantiate()
   include("docs/make.jl")
 '
+
+# Typst/PDF documentation with different platforms
+just docs-typst           # Use Typst_jll (default)
+just docs-typst native    # Use system typst
+just docs-typst none      # Generate .typ source only (fastest for preview)
 ```
 
-Output will be in `docs/build/`.
+HTML output will be in `docs/build/`, Typst/PDF output in `docs/build-typst/`.
 
 ### Documentation Style
 
@@ -273,22 +309,21 @@ Include:
 
 ### Quick Iteration
 
-For fast development cycles:
-
-```julia
-using DocumenterTypst
-
-makedocs(
-    format = DocumenterTypst.Typst(platform = "none"),
-    doctest = false,
-)
-```
-
-Then compile manually:
+For fast development cycles, generate only `.typ` source without compilation:
 
 ```bash
-cd docs/build
-typst compile Package.typ
+# Using just
+just docs-typst none
+
+# Or manually
+julia --project=docs docs/make.jl typst none
+```
+
+Then compile manually when needed:
+
+```bash
+cd docs/build-typst
+typst compile YourPackage.typ
 ```
 
 ### Debugging

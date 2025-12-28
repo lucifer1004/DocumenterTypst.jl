@@ -102,29 +102,24 @@ format = DocumenterTypst.Typst(platform = "none")
 
 Backward compatible with existing Documenter documentation:
 
-`````markdown
-Inline: `\\alpha + \\beta`
+````markdown
+Inline: `\alpha + \beta`
 
 Display:
 
-````math
-\\sum_{i=1}^n i = \\frac{n(n+1)}{2}
-\```
+```math
+\sum_{i=1}^n i = \frac{n(n+1)}{2}
+```
 ````
-`````
-
-`````
 
 ### Native Typst Math
 
 For new projects, you can use Typst's native math syntax:
 
 ````markdown
-````math typst
+```math typst
 sum_(i=1)^n i = (n(n+1))/2
-\```
-`````
-
+```
 ````
 
 ## Custom Styling
@@ -213,11 +208,15 @@ just format
 # Build HTML docs
 just docs
 
-# Build Typst/PDF docs
-just docs-typst
+# Build Typst/PDF docs with different platforms
+just docs-typst           # Use Typst_jll (default)
+just docs-typst native    # Use system typst
+just docs-typst none      # Generate .typ source only (no compilation)
 
-# Generate Typst source only (no compilation)
-just docs-typst-source
+# Run backend tests
+just test-backend         # Use Typst_jll (default)
+just test-backend native  # Use system typst
+just test-backend none    # Generate .typ only (fastest)
 
 # Generate changelog
 just changelog
@@ -246,4 +245,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Powered by [Typst](https://typst.app/)
 - LaTeX math rendering via [mitex](https://github.com/mitex-rs/mitex)
 - Inspired by [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl)
-````

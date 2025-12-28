@@ -9,6 +9,13 @@ default:
 test:
     julia --project -e 'using Pkg; Pkg.test()'
 
+# Run Typst backend integration tests
+# Platforms: typst (default), native, docker, none
+test-backend platform="typst":
+    @echo "Running Typst backend tests with platform: {{platform}}"
+    julia --project=test/typst_backend -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+    julia --project=test/typst_backend -e 'ENV["TYPST_PLATFORM"]="{{platform}}"; include("test/typst_backend/runtests.jl")'
+
 # Format code with Runic
 format:
     julia -e 'using Pkg; Pkg.add("Runic"); using Runic; Runic.main(["--verbose", "--inplace", "."])'
@@ -18,19 +25,11 @@ docs:
     julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); include("docs/make.jl")'
 
 # Build Typst/PDF documentation
-docs-typst:
+# Platforms: typst (default), native, docker, none
+docs-typst platform="typst":
+    @echo "Building Typst documentation with platform: {{platform}}"
     julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-    julia --project=docs docs/make.jl typst
-
-# Build Typst/PDF documentation with native compilation
-docs-typst-native:
-    julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-    julia --project=docs docs/make.jl typst native
-
-# Build Typst source without compilation
-docs-typst-source:
-    julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-    julia --project=docs docs/make.jl typst none
+    julia --project=docs docs/make.jl typst {if platform == "typst" {""} else {platform}}
 
 # Generate changelog for docs
 changelog:
@@ -41,6 +40,7 @@ clean:
     @echo "Cleaning build artifacts..."
     julia -e 'isdir(joinpath("docs", "build")) && rm(joinpath("docs", "build"), recursive=true, force=true)'
     julia -e 'isdir(joinpath("docs", "build-typst")) && rm(joinpath("docs", "build-typst"), recursive=true, force=true)'
+    julia -e 'isdir(joinpath("test", "typst_backend", "builds")) && rm(joinpath("test", "typst_backend", "builds"), recursive=true, force=true)'
     julia -e 'isfile(joinpath("docs", "src", "release-notes.md")) && rm(joinpath("docs", "src", "release-notes.md"))'
     julia -e 'for (root, dirs, files) in walkdir("."); for file in files; if endswith(file, ".jl.cov") || endswith(file, ".jl.mem") || (occursin(".jl.", file) && endswith(file, ".cov")); try rm(joinpath(root, file)); catch; end; end; end; end'
 

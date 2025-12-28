@@ -54,14 +54,18 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
             builddir = joinpath(dir, "build")
             @test isdir(builddir)
 
-            typfile = joinpath(builddir, "BackendTest.typ")
-            @test isfile(typfile)
+            # When platform != "none", .typ file is deleted after compilation
+            # Only check .typ file for platform="none"
+            if PLATFORM == "none"
+                typfile = joinpath(builddir, "BackendTest.typ")
+                @test isfile(typfile)
 
-            # Verify .typ content
-            content = read(typfile, String)
-            @test contains(content, "Test Document")
-            @test contains(content, "platform: ")
-            @test contains(content, "Lists work")
+                # Verify .typ content
+                content = read(typfile, String)
+                @test contains(content, "Test Document")
+                @test contains(content, "platform: ")
+                @test contains(content, "Lists work")
+            end
 
             # Check PDF was generated (except for platform="none")
             if PLATFORM != "none"
@@ -109,14 +113,22 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
                 remotes = nothing,
             )
 
-            typfile = joinpath(dir, "build", "MathTest.typ")
-            @test isfile(typfile)
+            # Only check .typ file for platform="none"
+            if PLATFORM == "none"
+                typfile = joinpath(dir, "build", "MathTest.typ")
+                @test isfile(typfile)
 
-            content = read(typfile, String)
-            # LaTeX math should use mitex
-            @test contains(content, "#mi(")
-            # Native Typst math should be preserved
-            @test contains(content, "integral")
+                content = read(typfile, String)
+                # LaTeX math should use mitex
+                @test contains(content, "#mi(")
+                # Native Typst math should be preserved
+                @test contains(content, "integral")
+            else
+                # For other platforms, just verify PDF was created
+                pdffile = joinpath(dir, "build", "MathTest.pdf")
+                @test isfile(pdffile)
+                @test filesize(pdffile) > 1000
+            end
         end
     end
 
@@ -159,12 +171,15 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
                 remotes = nothing,
             )
 
-            typfile = joinpath(dir, "build", "MultiPage.typ")
-            @test isfile(typfile)
+            # Only check .typ file for platform="none"
+            if PLATFORM == "none"
+                typfile = joinpath(dir, "build", "MultiPage.typ")
+                @test isfile(typfile)
 
-            content = read(typfile, String)
-            @test contains(content, "Welcome to the multi-page test")
-            @test contains(content, "This is chapter 1")
+                content = read(typfile, String)
+                @test contains(content, "Welcome to the multi-page test")
+                @test contains(content, "This is chapter 1")
+            end
 
             if PLATFORM != "none"
                 pdffile = joinpath(dir, "build", "MultiPage.pdf")
@@ -206,14 +221,22 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
                 remotes = nothing,
             )
 
-            typfile = joinpath(dir, "build", "TableTest.typ")
-            @test isfile(typfile)
+            # Only check .typ file for platform="none"
+            if PLATFORM == "none"
+                typfile = joinpath(dir, "build", "TableTest.typ")
+                @test isfile(typfile)
 
-            content = read(typfile, String)
-            @test contains(content, "#table(")
-            @test contains(content, "Header 1")
-            # Check escaping
-            @test contains(content, "\\@")
+                content = read(typfile, String)
+                @test contains(content, "#table(")
+                @test contains(content, "Header 1")
+                # Check escaping
+                @test contains(content, "\\@")
+            else
+                # For other platforms, just verify PDF was created
+                pdffile = joinpath(dir, "build", "TableTest.pdf")
+                @test isfile(pdffile)
+                @test filesize(pdffile) > 1000
+            end
         end
     end
 end

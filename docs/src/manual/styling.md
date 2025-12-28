@@ -273,7 +273,6 @@ For reproducible builds, use `Typst_jll` which includes basic fonts, or use Dock
 
 - [Typst Documentation](https://typst.app/docs/)
 - [Typst Guide](https://typst.app/docs/guides/)
-- [Default Template](https://github.com/lucifer1004/DocumenterTypst.jl/blob/main/assets/documenter.typ)
 
 ## Examples Gallery
 

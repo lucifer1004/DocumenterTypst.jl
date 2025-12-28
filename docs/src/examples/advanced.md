@@ -301,14 +301,6 @@ makedocs(
 
 Add `docs/src/assets/custom.typ` for styling.
 
-## Real-World Examples
-
-See these projects using DocumenterTypst:
-
-- [Example1.jl](https://github.com/user/Example1.jl) - Basic usage
-- [Example2.jl](https://github.com/user/Example2.jl) - Custom styling
-- [Example3.jl](https://github.com/user/Example3.jl) - Multiple formats
-
 ## Best Practices
 
 1. **Version Control** - Track `custom.typ` in git
