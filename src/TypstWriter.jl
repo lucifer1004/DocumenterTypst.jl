@@ -504,13 +504,24 @@ end
 
 function writeheader(io::IO, doc::Documenter.Document, settings::Typst)
     custom = joinpath(doc.user.root, doc.user.source, "assets", "custom.typ")
-    isfile(custom) ? cp(custom, "custom.typ"; force = true) : touch("custom.typ")
+
+    # Read custom.typ content to embed directly (instead of using #include)
+    # This ensures that #let config definitions are in the correct scope
+    custom_content = if isfile(custom)
+        read(custom, String)
+    else
+        "// No custom.typ found\n"
+    end
 
     preamble = """
     // Import templates
 
     #import("documenter.typ"): *
-    #import("custom.typ"): *
+
+    // Custom styling and content
+    // Embedded directly to ensure proper scoping of #let definitions
+
+    $(custom_content)
 
     // Useful variables
 

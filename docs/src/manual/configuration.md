@@ -147,7 +147,7 @@ Override default styling by creating `docs/src/assets/custom.typ`:
 ```typst
 // docs/src/assets/custom.typ
 
-// Custom colors
+// Custom colors and fonts
 #let config = (
   light-blue: rgb("3498db"),
   dark-blue: rgb("2c3e50"),
@@ -162,7 +162,45 @@ Override default styling by creating `docs/src/assets/custom.typ`:
 )
 ```
 
-This file is automatically included if it exists.
+The content of this file is automatically embedded in the generated document.
+
+### Custom Title Pages
+
+You can replace the default title page with your own:
+
+```typst
+// docs/src/assets/custom.typ
+
+#let config = (
+  skip-default-titlepage: true,  // Skip the default title page
+  // ... other config options
+)
+
+// Your custom title page
+#page(
+  margin: (left: 2cm, right: 2cm, bottom: 3cm, top: 2cm),
+  header: none,
+  footer: none,
+  numbering: none,
+)[
+  #align(center)[
+    #v(3cm)
+    #image("logo.png", width: 150pt)
+    #v(2cm)
+    #text(size: 48pt, weight: "bold")[My Package]
+    #v(1cm)
+    #text(size: 24pt)[Documentation]
+    #v(1fr)
+    #text(size: 14pt, fill: gray)[Version 1.0 • December 2025]
+  ]
+]
+
+#pagebreak()
+```
+
+**Note:** When `skip-default-titlepage: true`, you are responsible for creating your title page. The table of contents is still automatically generated.
+
+See the [Custom Styling](styling.md) guide for more details and examples.
 
 ## Performance Tuning
 

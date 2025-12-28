@@ -109,6 +109,8 @@
   quote-radius: (right: 3pt),
   // Header styling
   header-line-stroke: 0.5pt,
+  // Skip default title page
+  skip-default-titlepage: false,
 )
 #let config = default-config
 
@@ -450,18 +452,25 @@
     ]
   }
 
-  if title != none {
-    // Front matter: Roman numerals, simplified footer
-    set page(
-      numbering: "i",
-      footer: context {
-        let loc = here()
-        if loc.page() <= 1 { return } // No footer on title page
-        align(center)[#counter(page).display("i")]
-      },
-    )
-    counter(page).update(1)
-
+  // Check if user wants to skip the default title page
+  // (useful when providing a custom title page in custom.typ)
+  let should_show_default_titlepage = (
+    title != none and 
+    cfg.at("skip-default-titlepage", default: false) == false
+  )
+  
+  // Front matter: Roman numerals, simplified footer
+  set page(
+    numbering: "i",
+    footer: context {
+      let loc = here()
+      if loc.page() <= 1 { return } // No footer on title page
+      align(center)[#counter(page).display("i")]
+    },
+  )
+  counter(page).update(1)
+  
+  if should_show_default_titlepage {
     align(center + horizon)[
       #text(cfg.heading-size-title)[#strong[#title]]
       #v(2em)
@@ -472,13 +481,10 @@
       #text(cfg.metadata-size)[#date]
       #pagebreak()
     ]
-
-    outline(depth: 3, indent: true)
-    pagebreak()
-  } else {
-    outline(depth: 3, indent: true)
-    pagebreak()
   }
+
+  outline(depth: 3, indent: true)
+  pagebreak()
 
   // Main matter: Arabic numerals, restore header and footer
   set page(

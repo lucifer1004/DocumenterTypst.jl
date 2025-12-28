@@ -134,6 +134,146 @@ This file is automatically loaded if it exists.
 
 ## Advanced Customization
 
+### Custom Document Content
+
+The `custom.typ` file can contain not just configuration, but also **document content** like custom title pages, prefaces, or dedications. This content will be inserted at the beginning of your document, before the main content.
+
+#### Custom Title Page
+
+To replace the default title page with your own, set `skip-default-titlepage: true` in your config:
+
+```typst
+// docs/src/assets/custom.typ
+
+#let config = (
+  skip-default-titlepage: true,  // Skip the default title page
+  // ... other config
+)
+
+// Your custom title page
+#page(
+  margin: (left: 2cm, right: 2cm, bottom: 3cm, top: 2cm),
+  header: none,
+  footer: none,
+  numbering: none,
+)[
+  #align(center)[
+    #v(3cm)
+    #image("logo.png", width: 150pt)
+    #v(2cm)
+    #text(size: 48pt, weight: "bold")[My Amazing Package]
+    #v(1cm)
+    #text(size: 24pt)[Internal Documentation]
+    #v(1fr)
+    #text(size: 14pt, fill: gray)[Confidential • Company Use Only]
+  ]
+]
+
+// Optional: Add your own table of contents
+#outline(depth: 3, indent: true)
+#pagebreak()
+```
+
+**Important:** When `skip-default-titlepage: true`, you are responsible for:
+- Creating your title page
+- Adding the table of contents (if desired) with `#outline()`
+- Adding page breaks (`#pagebreak()`) as needed
+
+#### Adding Preamble Content
+
+You can add content **before** the main documentation without replacing the title page:
+
+```typst
+// docs/src/assets/custom.typ
+
+#let config = (
+  // ... your config, skip-default-titlepage NOT set
+)
+
+// Content after default title page and TOC, before main content
+// This appears at the start of the main matter (page 1)
+
+#align(center)[
+  #strong[Preface]
+  
+  #v(1em)
+  
+  This documentation was automatically generated from source code.
+  For the latest version, visit our website.
+]
+
+#pagebreak()
+```
+
+#### Full Example: Corporate Branding
+
+```typst
+// docs/src/assets/custom.typ
+
+#let config = (
+  skip-default-titlepage: true,
+  light-blue: rgb("0066cc"),
+  text-font: ("Helvetica Neue", "Arial"),
+)
+
+// Custom cover page
+#page(
+  margin: 0pt,
+  header: none,
+  footer: none,
+  numbering: none,
+)[
+  // Full-page branded background
+  #rect(
+    width: 100%,
+    height: 100%,
+    fill: gradient.linear(rgb("0066cc"), rgb("003d7a"), angle: 45deg)
+  )[
+    #align(center + horizon)[
+      #text(size: 60pt, fill: white, weight: "bold")[ACME Corp]
+      #v(2cm)
+      #text(size: 36pt, fill: white)[Product Documentation]
+      #v(1fr)
+      #text(size: 16pt, fill: white)[Version 2.0 • December 2025]
+    ]
+  ]
+]
+
+// Legal notice page
+#page(
+  header: none,
+  footer: none,
+  numbering: none,
+)[
+  #v(1fr)
+  #align(center)[
+    #text(size: 10pt)[
+      © 2025 ACME Corporation. All rights reserved.
+      
+      This document is confidential and proprietary.
+    ]
+  ]
+  #v(1fr)
+]
+
+// Table of contents with custom styling
+#page(numbering: "i")[
+  #align(center)[
+    #text(size: 24pt, weight: "bold")[Contents]
+  ]
+  #v(2em)
+  #outline(depth: 2, indent: true)
+]
+
+#pagebreak()
+```
+
+This is useful for:
+- **Corporate documentation**: Add branding, confidentiality notices, approval signatures
+- **Academic papers**: Add author affiliations, abstracts, acknowledgments
+- **Books**: Add dedications, forewords, prefaces
+- **Internal docs**: Add disclaimers, distribution lists, revision history
+
 ### Custom Functions
 
 You can define custom Typst functions:

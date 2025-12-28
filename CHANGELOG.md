@@ -27,7 +27,10 @@ Initial release of DocumenterTypst.jl - A Documenter.jl plugin for generating PD
   - Block quotes
   - Lists (ordered, unordered, nested)
 - Custom template system via `docs/src/assets/custom.typ` for styling customization. ([#5])
-- Comprehensive test suite with 133 tests covering:
+  - Support for custom document content (title pages, prefaces, dedications)
+  - Configuration option `skip-default-titlepage` to replace the default title page with custom content
+  - Direct embedding of custom.typ content for proper variable scoping
+- Comprehensive test suite with 128 tests covering:
   - Pure function unit tests
   - Configuration and compiler selection
   - AST rendering verification
@@ -38,7 +41,7 @@ Initial release of DocumenterTypst.jl - A Documenter.jl plugin for generating PD
   - Getting started guide
   - Configuration options
   - Math support (LaTeX and Typst)
-  - Custom styling
+  - Custom styling (including custom title pages)
   - Troubleshooting
 - Example tutorials:
   - Basic usage
