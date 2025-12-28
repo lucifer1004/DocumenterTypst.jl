@@ -39,7 +39,7 @@ export DOCUMENTER_TYPST_DEBUG=&quot;typst-debug&quot;
 julia docs/make.jl</code></pre><p>Output location will be printed:</p><pre><code class="language-text hljs">┌ Info: Typst sources copied for debugging to /path/to/typst-debug</code></pre><h3 id="DOCUMENTER_VERBOSE"><a class="docs-heading-anchor" href="#DOCUMENTER_VERBOSE"><code>DOCUMENTER_VERBOSE</code></a><a id="DOCUMENTER_VERBOSE-1"></a><a class="docs-heading-anchor-permalink" href="#DOCUMENTER_VERBOSE" title="Permalink"></a></h3><p>Enable verbose output.</p><pre><code class="language-bash hljs">export DOCUMENTER_VERBOSE=&quot;true&quot;
 julia docs/make.jl</code></pre><h2 id="Custom-Templates"><a class="docs-heading-anchor" href="#Custom-Templates">Custom Templates</a><a id="Custom-Templates-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Templates" title="Permalink"></a></h2><p>Override default styling by creating <code>docs/src/assets/custom.typ</code>:</p><pre><code class="language-typst hljs">// docs/src/assets/custom.typ
 
-// Custom colors
+// Custom colors and fonts
 #let config = (
   light-blue: rgb(&quot;3498db&quot;),
   dark-blue: rgb(&quot;2c3e50&quot;),
@@ -51,7 +51,33 @@ julia docs/make.jl</code></pre><h2 id="Custom-Templates"><a class="docs-heading-
   // Custom fonts
   text-font: (&quot;Times New Roman&quot;, &quot;DejaVu Serif&quot;),
   code-font: (&quot;Fira Code&quot;, &quot;DejaVu Sans Mono&quot;),
-)</code></pre><p>This file is automatically included if it exists.</p><h2 id="Performance-Tuning"><a class="docs-heading-anchor" href="#Performance-Tuning">Performance Tuning</a><a id="Performance-Tuning-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Tuning" title="Permalink"></a></h2><h3 id="Faster-Builds"><a class="docs-heading-anchor" href="#Faster-Builds">Faster Builds</a><a id="Faster-Builds-1"></a><a class="docs-heading-anchor-permalink" href="#Faster-Builds" title="Permalink"></a></h3><pre><code class="language-julia hljs">makedocs(
+)</code></pre><p>The content of this file is automatically embedded in the generated document.</p><h3 id="Custom-Title-Pages"><a class="docs-heading-anchor" href="#Custom-Title-Pages">Custom Title Pages</a><a id="Custom-Title-Pages-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Title-Pages" title="Permalink"></a></h3><p>You can replace the default title page with your own:</p><pre><code class="language-typst hljs">// docs/src/assets/custom.typ
+
+#let config = (
+  skip-default-titlepage: true,  // Skip the default title page
+  // ... other config options
+)
+
+// Your custom title page
+#page(
+  margin: (left: 2cm, right: 2cm, bottom: 3cm, top: 2cm),
+  header: none,
+  footer: none,
+  numbering: none,
+)[
+  #align(center)[
+    #v(3cm)
+    #image(&quot;logo.png&quot;, width: 150pt)
+    #v(2cm)
+    #text(size: 48pt, weight: &quot;bold&quot;)[My Package]
+    #v(1cm)
+    #text(size: 24pt)[Documentation]
+    #v(1fr)
+    #text(size: 14pt, fill: gray)[Version 1.0 • December 2025]
+  ]
+]
+
+#pagebreak()</code></pre><p><strong>Note:</strong> When <code>skip-default-titlepage: true</code>, you are responsible for creating your title page. The table of contents is still automatically generated.</p><p>See the <a href="../styling/">Custom Styling</a> guide for more details and examples.</p><h2 id="Performance-Tuning"><a class="docs-heading-anchor" href="#Performance-Tuning">Performance Tuning</a><a id="Performance-Tuning-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Tuning" title="Permalink"></a></h2><h3 id="Faster-Builds"><a class="docs-heading-anchor" href="#Faster-Builds">Faster Builds</a><a id="Faster-Builds-1"></a><a class="docs-heading-anchor-permalink" href="#Faster-Builds" title="Permalink"></a></h3><pre><code class="language-julia hljs">makedocs(
     format = DocumenterTypst.Typst(platform = &quot;none&quot;),
     doctest = false,  # Skip doctests during development
 )</code></pre><h3 id="Parallel-Builds"><a class="docs-heading-anchor" href="#Parallel-Builds">Parallel Builds</a><a id="Parallel-Builds-1"></a><a class="docs-heading-anchor-permalink" href="#Parallel-Builds" title="Permalink"></a></h3><p>DocumenterTypst uses temporary directories, so you can run multiple builds in parallel:</p><pre><code class="language-bash hljs">julia --project=docs -e &#39;using YourPackage; include(&quot;docs/make.jl&quot;)&#39; &amp;
@@ -65,4 +91,4 @@ wait</code></pre><h2 id="CI/CD-Configuration"><a class="docs-heading-anchor" hre
       include(&quot;docs/make.jl&quot;)
     &#39;
   env:
-    DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}</code></pre><h3 id="Platform-Specific-Notes"><a class="docs-heading-anchor" href="#Platform-Specific-Notes">Platform-Specific Notes</a><a id="Platform-Specific-Notes-1"></a><a class="docs-heading-anchor-permalink" href="#Platform-Specific-Notes" title="Permalink"></a></h3><p><strong>Linux</strong>: Works out of the box with <code>Typst_jll</code>.</p><p><strong>macOS</strong>: Works out of the box with <code>Typst_jll</code>.</p><p><strong>Windows</strong>: Works out of the box with <code>Typst_jll</code>. Path handling is automatically normalized.</p><h2 id="Troubleshooting"><a class="docs-heading-anchor" href="#Troubleshooting">Troubleshooting</a><a id="Troubleshooting-1"></a><a class="docs-heading-anchor-permalink" href="#Troubleshooting" title="Permalink"></a></h2><p>See <a href="../troubleshooting/">Troubleshooting Guide</a> for common issues and solutions.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../getting_started/">« Getting Started</a><a class="docs-footer-nextpage" href="../math/">Math Support »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 28 December 2025 08:06">Sunday 28 December 2025</span>. Using Julia version 1.12.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}</code></pre><h3 id="Platform-Specific-Notes"><a class="docs-heading-anchor" href="#Platform-Specific-Notes">Platform-Specific Notes</a><a id="Platform-Specific-Notes-1"></a><a class="docs-heading-anchor-permalink" href="#Platform-Specific-Notes" title="Permalink"></a></h3><p><strong>Linux</strong>: Works out of the box with <code>Typst_jll</code>.</p><p><strong>macOS</strong>: Works out of the box with <code>Typst_jll</code>.</p><p><strong>Windows</strong>: Works out of the box with <code>Typst_jll</code>. Path handling is automatically normalized.</p><h2 id="Troubleshooting"><a class="docs-heading-anchor" href="#Troubleshooting">Troubleshooting</a><a id="Troubleshooting-1"></a><a class="docs-heading-anchor-permalink" href="#Troubleshooting" title="Permalink"></a></h2><p>See <a href="../troubleshooting/">Troubleshooting Guide</a> for common issues and solutions.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../getting_started/">« Getting Started</a><a class="docs-footer-nextpage" href="../math/">Math Support »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 28 December 2025 09:52">Sunday 28 December 2025</span>. Using Julia version 1.12.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
