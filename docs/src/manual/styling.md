@@ -175,6 +175,7 @@ To replace the default title page with your own, set `skip-default-titlepage: tr
 ```
 
 **Important:** When `skip-default-titlepage: true`, you are responsible for:
+
 - Creating your title page
 - Adding the table of contents (if desired) with `#outline()`
 - Adding page breaks (`#pagebreak()`) as needed
@@ -195,9 +196,9 @@ You can add content **before** the main documentation without replacing the titl
 
 #align(center)[
   #strong[Preface]
-  
+
   #v(1em)
-  
+
   This documentation was automatically generated from source code.
   For the latest version, visit our website.
 ]
@@ -249,7 +250,7 @@ You can add content **before** the main documentation without replacing the titl
   #align(center)[
     #text(size: 10pt)[
       © 2025 ACME Corporation. All rights reserved.
-      
+
       This document is confidential and proprietary.
     ]
   ]
@@ -269,6 +270,7 @@ You can add content **before** the main documentation without replacing the titl
 ```
 
 This is useful for:
+
 - **Corporate documentation**: Add branding, confidentiality notices, approval signatures
 - **Academic papers**: Add author affiliations, abstracts, acknowledgments
 - **Books**: Add dedications, forewords, prefaces

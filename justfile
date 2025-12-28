@@ -10,7 +10,7 @@ test:
     julia --project -e 'using Pkg; Pkg.test()'
 
 # Run Typst backend integration tests
-# Platforms: typst (default), native, docker, none
+# Platforms: typst (default), native, none
 test-backend platform="typst":
     @echo "Running Typst backend tests with platform: {{platform}}"
     julia --project=test/typst_backend -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
@@ -25,7 +25,7 @@ docs:
     julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate(); include("docs/make.jl")'
 
 # Build Typst/PDF documentation
-# Platforms: typst (default), native, docker, none
+# Platforms: typst (default), native, none
 docs-typst platform="typst":
     @echo "Building Typst documentation with platform: {{platform}}"
     julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'

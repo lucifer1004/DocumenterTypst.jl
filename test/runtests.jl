@@ -132,7 +132,6 @@ end
     @testset "Format Options" begin
         @test DocumenterTypst.Typst(platform = "native").platform == "native"
         @test DocumenterTypst.Typst(platform = "typst").platform == "typst"
-        @test DocumenterTypst.Typst(platform = "docker").platform == "docker"
         @test DocumenterTypst.Typst(platform = "none").platform == "none"
 
         @test_throws ArgumentError DocumenterTypst.Typst(platform = "invalid")
@@ -146,13 +145,11 @@ end
 
     @testset "Compiler Selection" begin
         @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "native")) isa
-            TypstWriter.NativeCompiler
+              TypstWriter.NativeCompiler
         @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "typst")) isa
-            TypstWriter.TypstJllCompiler
-        @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "docker")) isa
-            TypstWriter.DockerCompiler
+              TypstWriter.TypstJllCompiler
         @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "none")) isa
-            TypstWriter.NoOpCompiler
+              TypstWriter.NoOpCompiler
     end
 
     # ============================================================================
@@ -182,15 +179,15 @@ end
         @testset "Headings" begin
             output = render_to_typst("# Level 1")
             @test strip(output) ==
-                "#extended_heading(level: 1, within-block: false, [Level 1])\n\n #label(\"index.md#Level-1\")"
+                "#extended_heading(level: 1, [Level 1])\n\n #label(\"index.md#Level-1\")"
 
             output = render_to_typst("## Level 2")
             @test strip(output) ==
-                "#extended_heading(level: 2, within-block: false, [Level 2])\n\n #label(\"index.md#Level-2\")"
+                "#extended_heading(level: 2, [Level 2])\n\n #label(\"index.md#Level-2\")"
 
             output = render_to_typst("### Level 3")
             @test strip(output) ==
-                "#extended_heading(level: 3, within-block: false, [Level 3])\n\n #label(\"index.md#Level-3\")"
+                "#extended_heading(level: 3, [Level 3])\n\n #label(\"index.md#Level-3\")"
         end
 
         @testset "Paragraphs" begin
@@ -276,7 +273,7 @@ end
 
         @testset "Block Quote" begin
             output = render_to_typst("> This is a quote\n> Multiple lines")
-            @test strip(output) == "#quote(block: true)[\nThis is a quote Multiple lines\n]"
+            @test strip(output) == "#safe-block(inset: 10pt)[\nThis is a quote Multiple lines\n]"
         end
 
         @testset "Thematic Break" begin
@@ -530,7 +527,7 @@ end
             # Verify various elements are present with exact structures
             @test contains(content, "-")  # List items (unordered)
             @test contains(content, "+")  # Ordered list items
-            @test contains(content, "#quote(block: true)[")  # BlockQuote
+            @test contains(content, "#safe-block(inset: 10pt)[")  # BlockQuote
             @test contains(content, "#line(length: 100%)")   # ThematicBreak
             @test contains(content, "#admonition(type: \"note\"")  # Admonition
             @test contains(content, "#table(")    # Table
@@ -680,11 +677,49 @@ end
             """
         )
         # Verify all nested formatting constructs are present
-        @test contains(output, "#quote")
+        @test contains(output, "#safe-block")  # BlockQuote now uses safe-block
         @test contains(output, "#strong")
         @test contains(output, "#raw")
         @test contains(output, "#emph")
         @test contains(output, "#admonition")
+    end
+
+    @testset "Configuration: PDF Optimization" begin
+        # Test that optimize_pdf option is accepted and stored correctly
+        format_with_opt = DocumenterTypst.Typst(; optimize_pdf = true)
+        @test format_with_opt.optimize_pdf
+
+        format_without_opt = DocumenterTypst.Typst(; optimize_pdf = false)
+        @test !format_without_opt.optimize_pdf
+
+        # Test default is true
+        format_default = DocumenterTypst.Typst()
+        @test format_default.optimize_pdf
+    end
+
+    @testset "Configuration: System Fonts" begin
+        # Test that use_system_fonts option is accepted and stored correctly
+        format_with_sys_fonts = DocumenterTypst.Typst(; use_system_fonts = true)
+        @test format_with_sys_fonts.use_system_fonts
+
+        format_without_sys_fonts = DocumenterTypst.Typst(; use_system_fonts = false)
+        @test !format_without_sys_fonts.use_system_fonts
+
+        # Test default is true
+        format_default = DocumenterTypst.Typst()
+        @test format_default.use_system_fonts
+    end
+
+    @testset "Configuration: Font Paths" begin
+        # Test empty font paths (default)
+        format_default = DocumenterTypst.Typst()
+        @test isempty(format_default.font_paths)
+
+        # Test with custom font paths
+        custom_paths = ["/usr/share/fonts", "/opt/fonts"]
+        format_with_paths = DocumenterTypst.Typst(; font_paths = custom_paths)
+        @test format_with_paths.font_paths == custom_paths
+        @test length(format_with_paths.font_paths) == 2
     end
 end
 

@@ -97,6 +97,7 @@ makedocs(;
         "Manual" => [
             "Getting Started" => "manual/getting_started.md",
             "Configuration" => "manual/configuration.md",
+            "PDF Size Optimization" => "manual/pdf_optimization.md",
             "Math Support" => "manual/math.md",
             "Custom Styling" => "manual/styling.md",
             "Troubleshooting" => "manual/troubleshooting.md",

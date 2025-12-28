@@ -63,7 +63,6 @@ That's it! Your markdown files need no changes.
 | LaTeX                 | Typst               | Notes                  |
 | --------------------- | ------------------- | ---------------------- |
 | `platform="native"`   | `platform="native"` | Uses system executable |
-| `platform="docker"`   | `platform="docker"` | Uses Docker            |
 | `platform="tectonic"` | `platform="typst"`  | Use Typst_jll instead  |
 | N/A                   | `platform="none"`   | New: source only       |
 

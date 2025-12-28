@@ -9,6 +9,8 @@ DocumenterTypst.Typst(;
     platform = "typst",
     version = "",
     typst = nothing,
+    optimize_pdf = true,
+    use_system_fonts = true,
 )
 ```
 
@@ -25,11 +27,6 @@ Compilation backend. Options:
   - Requires manual installation
   - Can use custom path via `typst` parameter
   - Useful for development with latest Typst features
-
-- **`"docker"`**: Docker-based compilation
-  - Requires Docker
-  - Reproducible builds
-  - Isolated environment
 
 - **`"none"`**: Generate `.typ` source only
   - No compilation
@@ -64,6 +61,60 @@ format = DocumenterTypst.Typst(
     typst = `/usr/local/bin/typst --font-path /custom/fonts`
 )
 ```
+
+### `optimize_pdf::Bool`
+
+Enable automatic PDF optimization after compilation. **Default: `true`**
+
+When enabled, DocumenterTypst automatically optimizes the generated PDF using `pdfcpu`, which:
+
+- Compresses uncompressed content streams
+- Optimizes PDF object structure
+- Typically reduces file size by 60-85% for large documents
+- Adds ~2 seconds to build time
+
+```julia
+# Enable optimization (default - recommended for production)
+format = DocumenterTypst.Typst(optimize_pdf = true)
+
+# Disable optimization (faster builds for development)
+format = DocumenterTypst.Typst(optimize_pdf = false)
+```
+
+The optimization process shows detailed before/after statistics:
+
+```text
+Info: TypstWriter: optimizing PDF with pdfcpu...
+└   size_before = "42.79 MB"
+
+Info: TypstWriter: PDF optimization completed.
+│   size_after = "15.23 MB"
+│   reduction = "64.4%"
+└   time = "1.85s"
+```
+
+### `use_system_fonts::Bool`
+
+Control whether Typst can use system-installed fonts. **Default: `true`** (for backward compatibility)
+
+When set to `false`, uses Typst's `--ignore-system-fonts` flag, which:
+
+- Prevents Type 3 emoji fonts (e.g., AppleColorEmoji) from being embedded
+- Can reduce PDF size significantly (40+ MB for emoji-heavy documents)
+- Only fonts explicitly specified in the template will be used
+
+```julia
+# Use system fonts (default - maximum compatibility)
+format = DocumenterTypst.Typst(use_system_fonts = true)
+
+# Ignore system fonts (smaller PDFs, recommended for production)
+format = DocumenterTypst.Typst(use_system_fonts = false)
+```
+
+**Recommendation**: Set to `false` for production builds to minimize PDF size, especially for large documentation projects.
+
+!!! note "Performance Impact"
+For the Julia documentation (2211 pages): - With system fonts: 100 MB (includes Type 3 AppleColorEmoji) - Without system fonts: 60 MB (40 MB reduction) - After optimization: 15 MB (combined with `optimize_pdf=true`)
 
 ## makedocs Arguments
 
@@ -203,6 +254,61 @@ You can replace the default title page with your own:
 See the [Custom Styling](styling.md) guide for more details and examples.
 
 ## Performance Tuning
+
+### Compilation Timing
+
+DocumenterTypst reports detailed timing for each build stage:
+
+```text
+Info: TypstWriter: AST conversion completed.
+└   time = "0.45s"
+
+Info: TypstWriter: Typst compilation completed.
+└   time = "0.33s"
+
+Info: TypstWriter: PDF optimization completed.
+│   size_after = "0.04 MB"
+│   reduction = "34.9%"
+└   time = "0.05s"
+```
+
+Total build time is typically under 10 seconds for medium-sized documentation.
+
+### Recommended Production Settings
+
+For minimal PDF size and optimal quality:
+
+```julia
+makedocs(
+    format = DocumenterTypst.Typst(
+        platform = "typst",           # Use Typst_jll (default)
+        optimize_pdf = true,          # Enable optimization (default)
+        use_system_fonts = false,     # Minimize size (NOT default)
+    ),
+)
+```
+
+This configuration typically produces PDFs that are:
+
+- 85% smaller than unoptimized builds
+- 40-60 MB smaller than builds with system fonts
+- Comparable in size to LaTeX output (1.5-2x larger)
+
+### Faster Development Builds
+
+For quick iteration during development:
+
+```julia
+makedocs(
+    format = DocumenterTypst.Typst(
+        platform = "none",            # Skip PDF generation
+        optimize_pdf = false,         # Skip optimization
+    ),
+    doctest = false,                  # Skip doctests
+)
+```
+
+This only generates the `.typ` source file, which is much faster (~1 second for large projects).
 
 ### Faster Builds
 

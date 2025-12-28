@@ -36,6 +36,15 @@
   final
 }
 
+// Container state management for heading pagebreaks
+#let in-container = state("in-container", false)
+
+#let safe-block(body, ..args) = {
+  in-container.update(true)
+  block(..args, body)
+  in-container.update(false)
+}
+
 // Default configuration dictionary
 #let default-config = (
   // Colors
@@ -144,7 +153,7 @@
   ]
 
   // Content area: breakable, zero spacing above
-  block(
+  safe-block(
     width: 100%,
     breakable: true,
     fill: bgcolor,
@@ -156,9 +165,9 @@
   ]
 }
 
-#let extended_heading(level: 0, outlined: true, within-block: false, body) = {
-  // Add pagebreak for level 1 and 2 headings, unless they are within a block (like admonition)
-  if not within-block and level <= 2 {
+#let extended_heading(level: 0, outlined: true, body) = context {
+  // Add pagebreak for level 1 and 2 headings, unless they are within a container
+  if level <= 2 and not in-container.get() {
     pagebreak(weak: true)
   }
 

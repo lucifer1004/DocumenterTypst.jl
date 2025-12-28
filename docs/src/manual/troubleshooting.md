@@ -55,17 +55,6 @@ Pkg.add("DocumenterTypst")
    winget install Typst.Typst
    ```
 
-### Docker Not Found
-
-**Problem**: `ERROR: docker command not found`
-
-**When**: Using `platform="docker"`
-
-**Solution**:
-
-1. Use `platform="typst"` instead (recommended)
-2. Or install Docker: https://docs.docker.com/get-docker/
-
 ### Compilation Timeout
 
 **Problem**: Build hangs or takes too long

@@ -17,6 +17,7 @@ import Documenter: Documenter
 using Dates: Dates
 using MarkdownAST: MarkdownAST, Node
 using Typst_jll: typst as typst_exe
+using pdfcpu_jll: pdfcpu
 
 # ============================================================================
 # Path handling and anchor identification
@@ -126,8 +127,6 @@ printed in the document and also appended to the output PDF file name.
       provides the Typst compiler across all platforms.
     - `"native"`: Uses the system-installed `typst` executable found in `PATH`, or 
       a custom path specified via the `typst` keyword argument.
-    - `"docker"`: Uses Docker to compile the Typst file. Requires `docker` to be 
-      available in `PATH`.
     - `"none"`: Skips compilation and only generates the `.typ` source file in the 
       build directory.
 
@@ -137,15 +136,30 @@ printed in the document and also appended to the output PDF file name.
 
 - **`typst`** allows specifying a custom path to a `typst` executable. Only used when 
   `platform="native"`. Can be either a `String` path or a `Cmd` object.
+
+- **`optimize_pdf`** enables automatic PDF optimization using pdfcpu after compilation.
+  Defaults to `true`. When enabled, reduces PDF file size by 60-85% by compressing 
+  uncompressed streams and optimizing PDF structure. Set to `false` to skip optimization 
+  (e.g., for faster builds during development).
+
+- **`use_system_fonts`** controls whether to allow Typst to use system fonts.
+  Defaults to `true`. Setting to `false` will possibly decrease the size of the PDF file.
+
+- **`font_paths`** specifies custom font directories for Typst to search.
+  Defaults to `String[]` (empty). Provide a vector of directory paths to add custom fonts.
+  Each path will be passed to Typst as `--font-path` argument.
 """
 struct Typst <: Documenter.Writer
     platform::String
     version::String
     typst::Union{Cmd, String, Nothing}
-    function Typst(; platform = "typst", version = get(ENV, "TRAVIS_TAG", ""), typst = nothing)
-        platform ∈ ("native", "typst", "docker", "none") ||
+    optimize_pdf::Bool
+    use_system_fonts::Bool
+    font_paths::Vector{String}
+    function Typst(; platform = "typst", version = get(ENV, "TRAVIS_TAG", ""), typst = nothing, optimize_pdf = true, use_system_fonts = true, font_paths = String[])
+        platform ∈ ("native", "typst", "none") ||
             throw(ArgumentError("unknown platform: $platform"))
-        return new(platform, string(version), typst)
+        return new(platform, string(version), typst, optimize_pdf, use_system_fonts, font_paths)
     end
 end
 
@@ -294,45 +308,108 @@ function build_anchor_lookup(doc::Documenter.Document)
     return lookup
 end
 
+"""
+    include_typst_file(context::Context, title::AbstractString, depth::Int)
+
+Include a pure Typst file using #include directive with automatic heading level adjustment.
+
+Uses Typst's `offset` parameter to adjust heading levels and `#include` to preserve
+relative paths for images and other resources.
+
+# Arguments
+- `context::Context`: The rendering context
+- `title::AbstractString`: The chapter/section title from pages config (can be empty)
+- `depth::Int`: The nesting depth in the pages configuration
+
+# Implementation Details
+- Validates source file existence before rendering
+- Calculates heading offset: `depth + (has_title ? 1 : 0) - 1`
+- Generates a scoped block with `set heading(offset: N)`
+- Uses `#include "path"` to maintain file's relative path context
+"""
+function include_typst_file(context::Context, title::AbstractString, depth::Int)
+    # Verify source file exists
+    src_path = joinpath(context.doc.user.root, context.doc.user.source, context.filename)
+    if !isfile(src_path)
+        error("Typst file not found: $(src_path)")
+    end
+
+    # Insert chapter/section title if provided
+    if !isempty(title) && depth <= length(DOCUMENT_STRUCTURE)
+        _println(context, "#extended_heading(level: $(depth), [$(title)])\n")
+    end
+
+    # Calculate heading offset
+    # depth: position in pages hierarchy
+    # +1 if title exists (title itself occupies one level)
+    # -1 because .typ uses = for level 1, but offset starts from 0
+    heading_offset = depth + (isempty(title) ? 0 : 1) - 1
+
+    # Generate scoped block with offset
+    _println(context, "{")
+    if heading_offset > 0
+        _println(context, "  set heading(offset: $(heading_offset))")
+    end
+    _println(context)
+
+    # Use #include with path relative to build directory
+    # Documenter has already copied src/ to build-typst/, so paths match
+    include_path = replace(context.filename, "\\" => "/")
+    _println(context, "  include \"$(include_path)\"")
+    _println(context)
+
+    _println(context, "}")
+    return _println(context)
+end
+
 function render(doc::Documenter.Document, settings::Typst = Typst())
-    @info "TypstWriter: creating the Typst file."
     return mktempdir() do path
         cp(joinpath(doc.user.root, doc.user.build), joinpath(path, "build"))
         cd(joinpath(path, "build")) do
             fileprefix = typst_fileprefix(doc, settings)
-            open("$(fileprefix).typ", "w") do io
-                # Build global rendering state with cached build path
-                build_path = replace(doc.user.build, "\\" => "/")
-                state = RenderState(build_anchor_lookup(doc), build_path)
-                context = Context(io, doc, state)
 
-                writeheader(context, doc, settings)
-                for (title, filename, depth) in files(doc.user.pages)
-                    context.filename = filename
-                    empty!(context.footnote_defs)
-                    if 1 <= depth <= length(DOCUMENT_STRUCTURE)
-                        header_text = "#extended_heading(level: $(depth), within-block: false,  [$(title)])\n"
-                        if isempty(filename)
-                            _println(context, header_text)
-                        else
-                            path = normpath(filename)
-                            page = doc.blueprint.pages[path]
-                            if get(page.globals.meta, :IgnorePage, :none) !== :Typst
-                                # Pre-scan to collect footnote definitions
-                                collect_footnotes!(context.footnote_defs, page.mdast)
+            # Phase 1: AST to Typst conversion
+            @info "TypstWriter: converting Documenter AST to Typst..."
+            typst_time = @elapsed begin
+                open("$(fileprefix).typ", "w") do io
+                    # Build global rendering state with cached build path
+                    build_path = replace(doc.user.build, "\\" => "/")
+                    state = RenderState(build_anchor_lookup(doc), build_path)
+                    context = Context(io, doc, state)
 
-                                context.depth = depth + (isempty(title) ? 0 : 1)
-                                context.depth > depth && _println(context, header_text)
-                                typst_toplevel(context, page.mdast.children)
+                    writeheader(context, doc, settings)
+                    for (title, filename, depth) in files(doc.user.pages)
+                        context.filename = filename
+                        empty!(context.footnote_defs)
+                        if 1 <= depth <= length(DOCUMENT_STRUCTURE)
+                            header_text = "#extended_heading(level: $(depth), [$(title)])\n"
+                            if isempty(filename)
+                                _println(context, header_text)
+                            elseif endswith(filename, ".typ")
+                                # New path: include pure Typst files
+                                include_typst_file(context, title, depth)
+                            else
+                                # Existing path: process Markdown files
+                                path = normpath(filename)
+                                page = doc.blueprint.pages[path]
+                                if get(page.globals.meta, :IgnorePage, :none) !== :Typst
+                                    # Pre-scan to collect footnote definitions
+                                    collect_footnotes!(context.footnote_defs, page.mdast)
+
+                                    context.depth = depth + (isempty(title) ? 0 : 1)
+                                    context.depth > depth && _println(context, header_text)
+                                    typst_toplevel(context, page.mdast.children)
+                                end
                             end
                         end
                     end
+                    writefooter(context, doc)
                 end
-                writefooter(context, doc)
+                cp(STYLE, "documenter.typ")
             end
-            cp(STYLE, "documenter.typ")
+            @info "TypstWriter: AST conversion completed." time = "$(round(typst_time; digits = 2))s"
 
-            # compile .typ
+            # Phase 2 & 3: Typst compilation (and optimization if enabled)
             status = compile_typ(doc, settings, fileprefix)
 
             # Debug: if DOCUMENTER_TYPST_DEBUG environment variable is set, copy the Typst
@@ -369,13 +446,54 @@ function typst_fileprefix(doc::Documenter.Document, settings::Typst)
     return replace(fileprefix, " " => "")
 end
 
-# Default Docker image tag for Typst compiler
-# Uses official Typst Docker images from GitHub Container Registry
-const DOCKER_IMAGE_TAG = "latest"
-
 # ============================================================================
 # Typst compilation backends
 # ============================================================================
+
+"""
+    optimize_pdf(pdf_file::String; verbose::Bool=false) -> Bool
+
+Optimize PDF file size using pdfcpu.
+Compresses uncompressed streams and optimizes the PDF structure.
+
+Typically reduces file size by 60-85% for Typst-generated PDFs by:
+- Compressing all uncompressed content streams
+- Optimizing object structure
+- Deduplicating resources
+
+Returns true on success, false on failure (with warning logged).
+"""
+function optimize_pdf(pdf_file::String; verbose::Bool = false)
+    try
+        # Get original file size
+        size_before = filesize(pdf_file)
+        size_before_mb = size_before / (1024 * 1024)
+
+        @info "TypstWriter: optimizing PDF with pdfcpu..." size_before = "$(round(size_before_mb; digits = 2)) MB"
+
+        # pdfcpu optimize command with timing
+        opt_time = @elapsed begin
+            cmd = `$(pdfcpu()) optimize $(pdf_file)`
+            if verbose
+                run(cmd)
+            else
+                # Redirect output to avoid clutter
+                run(pipeline(cmd; stdout = devnull, stderr = devnull))
+            end
+        end
+
+        # Get optimized file size
+        size_after = filesize(pdf_file)
+        size_after_mb = size_after / (1024 * 1024)
+        reduction_pct = round((1 - size_after / size_before) * 100; digits = 1)
+
+        @info "TypstWriter: PDF optimization completed." size_after = "$(round(size_after_mb; digits = 2)) MB" reduction = "$(reduction_pct)%" time = "$(round(opt_time; digits = 2))s"
+        return true
+    catch e
+        @warn "PDF optimization failed, using unoptimized version" exception = e
+        return false
+    end
+end
 
 """
 Abstract base type for Typst compilation backends.
@@ -391,11 +509,6 @@ end
 """Typst_jll Julia binary wrapper."""
 struct TypstJllCompiler <: TypstCompiler end
 
-"""Docker-based compilation."""
-struct DockerCompiler <: TypstCompiler
-    image_tag::String
-end
-
 """No-op compiler (only generates .typ source)."""
 struct NoOpCompiler <: TypstCompiler end
 
@@ -410,8 +523,6 @@ function get_compiler(settings::Typst)
         return NativeCompiler(cmd)
     elseif settings.platform == "typst"
         return TypstJllCompiler()
-    elseif settings.platform == "docker"
-        return DockerCompiler(DOCKER_IMAGE_TAG)
     elseif settings.platform == "none"
         return NoOpCompiler()
     else
@@ -420,49 +531,63 @@ function get_compiler(settings::Typst)
 end
 
 """
-    compile(compiler::TypstCompiler, fileprefix::String) -> Bool
+    compile(compiler::TypstCompiler, fileprefix::String, settings::Typst) -> Bool
 
 Compile the .typ file using the given compiler backend.
 Returns true on success, throws on failure.
 """
-function compile(c::NativeCompiler, fileprefix::String)
+function compile(c::NativeCompiler, fileprefix::String, settings::Typst)
     Sys.which("typst") === nothing && error("typst command not found")
-    @info "TypstWriter: using native typst."
-    piperun(`$(c.typst_cmd) compile $(fileprefix).typ`; clearlogs = true)
-    return true
-end
+    @info "TypstWriter: compiling Typst to PDF (native)..."
 
-function compile(c::TypstJllCompiler, fileprefix::String)
-    @info "TypstWriter: using typst (via Typst_jll)."
-    piperun(`$(typst_exe()) compile $(fileprefix).typ`; clearlogs = true)
-    return true
-end
-
-function compile(c::DockerCompiler, fileprefix::String)
-    Sys.which("docker") === nothing && error("docker command not found")
-    @info "TypstWriter: using docker to compile typ."
-
-    workdir = "/work"
-
-    # Use official Typst Docker image
-    # c.image_tag can be "latest" or a specific version like "0.12.0"
-    docker_image = "ghcr.io/typst/typst:$(c.image_tag)"
-
-    try
-        # Run typst directly in the mounted directory
-        # :Z flag for SELinux compatibility (no-op on non-SELinux systems)
-        piperun(
-            `docker run --rm -v $(pwd()):$(workdir):Z -w $(workdir) $(docker_image) compile $(fileprefix).typ`;
-            clearlogs = true
-        )
-        return true
-    catch e
-        @error "Docker compilation failed" exception = e
-        return false
+    # Build compile command with optional flags
+    cmd_parts = [c.typst_cmd, "compile"]
+    
+    # Add font paths
+    for path in settings.font_paths
+        push!(cmd_parts, "--font-path")
+        push!(cmd_parts, path)
     end
+    
+    # Add system fonts flag
+    if !settings.use_system_fonts
+        push!(cmd_parts, "--ignore-system-fonts")
+    end
+    
+    push!(cmd_parts, "$(fileprefix).typ")
+    cmd = `$cmd_parts`
+
+    compile_time = @elapsed piperun(cmd; clearlogs = true)
+    @info "TypstWriter: Typst compilation completed." time = "$(round(compile_time; digits = 2))s"
+    return true
 end
 
-function compile(::NoOpCompiler, ::String)
+function compile(c::TypstJllCompiler, fileprefix::String, settings::Typst)
+    @info "TypstWriter: compiling Typst to PDF (Typst_jll)..."
+
+    # Build compile command with optional flags
+    cmd_parts = [typst_exe(), "compile"]
+    
+    # Add font paths
+    for path in settings.font_paths
+        push!(cmd_parts, "--font-path")
+        push!(cmd_parts, path)
+    end
+    
+    # Add system fonts flag
+    if !settings.use_system_fonts
+        push!(cmd_parts, "--ignore-system-fonts")
+    end
+    
+    push!(cmd_parts, "$(fileprefix).typ")
+    cmd = `$cmd_parts`
+
+    compile_time = @elapsed piperun(cmd; clearlogs = true)
+    @info "TypstWriter: Typst compilation completed." time = "$(round(compile_time; digits = 2))s"
+    return true
+end
+
+function compile(::NoOpCompiler, ::String, ::Typst)
     @info "TypstWriter: skipping compilation (platform=none)."
     return true
 end
@@ -471,13 +596,24 @@ end
     compile_typ(doc::Document, settings::Typst, fileprefix::String) -> Bool
 
 Main entry point for Typst compilation. 
-Selects the appropriate compiler and handles errors uniformly.
+Selects the appropriate compiler, handles errors uniformly, and optionally optimizes PDF.
 """
 function compile_typ(::Documenter.Document, settings::Typst, fileprefix::String)
     compiler = get_compiler(settings)
 
     try
-        return compile(compiler, fileprefix)
+        success = compile(compiler, fileprefix, settings)
+
+        # Apply PDF optimization if enabled and compilation succeeded
+        if success && settings.optimize_pdf && settings.platform != "none"
+            pdf_file = "$(fileprefix).pdf"
+            if isfile(pdf_file)
+                verbose = "--verbose" in ARGS || get(ENV, "DOCUMENTER_VERBOSE", "false") == "true"
+                optimize_pdf(pdf_file; verbose = verbose)
+            end
+        end
+
+        return success
     catch err
         logs = cp(pwd(), mktempdir(; cleanup = false); force = true)
         @error "TypstWriter: compilation failed. " *
@@ -735,10 +871,9 @@ end
 
 function typst(io::Context, node::Node, heading::MarkdownAST.Heading)
     N = heading.level
-    # Use io.in_block to determine if we're inside a container
     _print(
         io,
-        "#extended_heading(level: $(min(io.depth + N - 1, length(DOCUMENT_STRUCTURE))), within-block: $(string(io.in_block)), ["
+        "#extended_heading(level: $(min(io.depth + N - 1, length(DOCUMENT_STRUCTURE))), ["
     )
     io.in_header = true
     typst(io, node.children)
@@ -807,7 +942,7 @@ function typst(io::Context, node::Node, ::MarkdownAST.Paragraph)
 end
 
 function typst(io::Context, node::Node, ::MarkdownAST.BlockQuote)
-    _println(io, "#quote(block: true)[")
+    _println(io, "#safe-block(inset: 10pt)[")
     old_in_block = io.in_block
     io.in_block = true
     typst(io, node.children)

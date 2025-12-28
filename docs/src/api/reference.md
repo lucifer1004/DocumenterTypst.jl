@@ -50,7 +50,6 @@ makedocs(
 
 - **`"typst"`** (default): Uses `Typst_jll` for automatic cross-platform support
 - **`"native"`**: Uses system-installed `typst` executable
-- **`"docker"`**: Docker-based compilation for reproducible builds
 - **`"none"`**: Generate `.typ` source only, skip PDF compilation
 
 ### Additional Options

@@ -5,7 +5,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-Initial release of DocumenterTypst.jl - A Documenter.jl plugin for generating PDF documentation via Typst.
+### Removed
+
+- **Docker backend (`platform="docker"`)**: Removed unused compilation backend
+  - Docker platform was functionally redundant with Typst_jll (default)
+  - Typst_jll provides better cross-platform support with zero setup
+  - Users should migrate to `platform="typst"` (default) or `platform="native"`
+  - Reduces maintenance burden and code complexity (41 lines removed)
+
+### Added
+
+- Automatic PDF optimization using pdfcpu_jll
+- System font control via `use_system_fonts` option
+  - Uses Typst's `--ignore-system-fonts` flag when disabled
+- Detailed compilation timing for all stages
+- Support for pure Typst files (`.typ`) as documentation sources alongside Markdown files
+  - Automatic heading level adjustment using Typst's `offset` parameter
+  - Resource paths preserved via `#include` directive
+  - Mixed `.md` and `.typ` files in the same documentation project
+
+### Changed
+
+- Refactored `extended_heading` to use Typst state mechanism instead of parameter passing
+  - Simplified function signature (removed `within-block` parameter)
+  - Uses `in-container` state for tracking block context
+  - Added `safe-block` wrapper for automatic state management
+- BlockQuote rendering now uses `safe-block` instead of `quote` function for consistent heading behavior
+
+### Fixed
+
+- PDF file size bloat from uncompressed streams (100 MB → 15 MB for large documents after optimization)
+- PDF size bloat from Type 3 emoji fonts (can be disabled via `use_system_fonts=false`)
+
+## v0.0.x
 
 ### Added
 

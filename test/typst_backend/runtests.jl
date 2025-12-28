@@ -239,6 +239,60 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
             end
         end
     end
+
+    @testset "Pure Typst Files" begin
+        fixture_dir = joinpath(@__DIR__, "fixtures", "pure_typst")
+
+        if isdir(fixture_dir)
+            mktempdir() do tmpdir
+                # Copy fixture to temporary directory
+                cp(fixture_dir, joinpath(tmpdir, "pure_typst"))
+                test_dir = joinpath(tmpdir, "pure_typst")
+
+                # Run makedocs
+                cd(test_dir) do
+                    ENV["TYPST_PLATFORM"] = PLATFORM
+                    include(joinpath(test_dir, "make.jl"))
+                end
+
+                builddir = joinpath(test_dir, "build")
+                @test isdir(builddir)
+
+                # Check for platform="none"
+                if PLATFORM == "none"
+                    typfile = joinpath(builddir, "PureTypstTest-0.1.0.typ")
+                    @test isfile(typfile)
+
+                    content = read(typfile, String)
+
+                    # Verify mixed .md and .typ content
+                    @test contains(content, "Pure Typst Test Documentation")  # from index.md
+                    @test contains(content, "Pure Typst Section")  # from simple.typ
+                    @test contains(content, "Nested Document with Image")  # from nested/with_image.typ
+
+                    # Verify heading offset is applied
+                    @test contains(content, "set heading(offset:")
+
+                    # Verify #include is used
+                    @test contains(content, "include \"simple.typ\"")
+                    @test contains(content, "include \"nested/with_image.typ\"")
+
+                    # Verify safe-block is used
+                    @test contains(content, "#safe-block(")
+
+                    # Verify extended_heading no longer has within-block parameter
+                    @test !contains(content, "within-block:")
+                else
+                    # For other platforms, verify PDF was created
+                    pdffile = joinpath(builddir, "PureTypstTest-0.1.0.pdf")
+                    @test isfile(pdffile)
+                    @test filesize(pdffile) > 1000
+                end
+            end
+        else
+            @warn "Pure Typst fixture not found at $fixture_dir, skipping test"
+        end
+    end
 end
 
 @info "Typst backend tests ($PLATFORM) completed successfully!"

@@ -15,7 +15,6 @@ A [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) plugin for generat
 - **Multiple Compilation Backends**:
   - `typst`: Typst_jll (default, works on all platforms)
   - `native`: System-installed Typst compiler
-  - `docker`: Docker-based compilation
   - `none`: Generate `.typ` source only
 - **Rich Markdown Support**: Full support for Documenter's extended Markdown features
 
@@ -49,7 +48,7 @@ makedocs(
 
 ```julia
 DocumenterTypst.Typst(
-    platform = "typst",  # Compilation backend: "typst", "native", "docker", "none"
+    platform = "typst",  # Compilation backend: "typst", "native", "none"
     version = "1.0.0",   # Version string for the PDF filename
     typst = nothing,     # Custom path to typst executable (for platform="native")
 )
@@ -74,14 +73,6 @@ format = DocumenterTypst.Typst(
     platform = "native",
     typst = "/usr/local/bin/typst"  # or `typst` Cmd object
 )
-```
-
-#### `platform="docker"`
-
-Compiles using Docker. Requires `docker` to be available in `PATH`.
-
-```julia
-format = DocumenterTypst.Typst(platform = "docker")
 ```
 
 #### `platform="none"`

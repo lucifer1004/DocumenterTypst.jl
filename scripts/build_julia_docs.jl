@@ -28,7 +28,7 @@
 #   julia scripts/build_julia_docs.jl --julia-repo=../julia --platform=native
 #
 # Environment variables:
-#   TYPST_PLATFORM - Compilation backend: "native", "typst", "docker", "none" (default: "native")
+#   TYPST_PLATFORM - Compilation backend: "native", "typst", "none" (default: "native")
 #
 
 using Dates, Pkg
@@ -270,7 +270,8 @@ function create_typst_make_script(julia_repo, platform, typst_assets)
     const format = if render_pdf
         import DocumenterTypst
         DocumenterTypst.Typst(
-            platform = "$(platform)"
+            platform = "$(platform)",
+            use_system_fonts = false,
         )
     else
         Documenter.HTML(
@@ -359,7 +360,7 @@ Main entry point for the build script.
 
 Command-line arguments:
   --julia-repo=PATH    Use existing Julia repository instead of cloning
-  --platform=PLATFORM  Typst compilation platform (native, typst, docker, none)
+  --platform=PLATFORM  Typst compilation platform (native, typst, none)
   --help              Show this help message
 
 Environment variables:

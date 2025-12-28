@@ -10,7 +10,7 @@ This directory contains tests specifically for the Typst backend with different 
 
 ## Environment Variables
 
-- `TYPST_PLATFORM` - Platform to test (`typst`, `native`, `docker`, `none`)
+- `TYPST_PLATFORM` - Platform to test (`typst`, `native`, `none`)
 
 ## Running Locally
 

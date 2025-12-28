@@ -2,7 +2,7 @@
 #
 # Features:
 # - Multi-platform testing (Linux, macOS, Windows)
-# - Typst backend specific tests (4 platforms: typst_jll, native, docker, source-only)
+# - Typst backend specific tests (3 platforms: typst_jll, native, source-only)
 # - Code coverage via Codecov
 # - Documentation building and deployment
 # - Code formatting (Runic for Julia, Prettier for markdown/YAML)
@@ -156,7 +156,6 @@ jobs:
         platform:
           - typst # Typst_jll - Julia binary wrapper
           - native # System typst - user-installed binary
-          - docker # Docker container - CI environments
           - none # Source only - validation without compilation
         os:
           - ubuntu-latest
