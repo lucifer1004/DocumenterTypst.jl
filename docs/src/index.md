@@ -118,4 +118,4 @@ DocumenterTypst.jl builds upon:
 
 ## License
 
-MIT License. See [LICENSE](https://github.com/lucifer1004/DocumenterTypst.jl/blob/main/LICENSE) for details.
+MIT License.
