@@ -127,7 +127,7 @@ if output_format == :typst
     end
     deploydocs(;
         repo = "github.com/lucifer1004/DocumenterTypst.jl",
-        target = "pdf/build-typst/commit",
+        target = "build-typst/commit",
         branch = "gh-pages-typst",
         forcepush = true
     )

@@ -13,7 +13,7 @@ This project follows the [Julia Community Standards](https://julialang.org/commu
 1. **Fork and clone the repository**:
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/DocumenterTypst.jl.git
+   git clone https://github.com/lucifer1004/DocumenterTypst.jl
    cd DocumenterTypst.jl
    ```
 

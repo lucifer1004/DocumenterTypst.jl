@@ -441,11 +441,14 @@ function compile(c::DockerCompiler, fileprefix::String)
     @info "TypstWriter: using docker to compile typ."
 
     # Use current user's UID:GID for Docker to avoid permission issues
-    uid = @static if Sys.iswindows()
+    uid_gid = @static if Sys.iswindows()
         # Windows doesn't have UIDs, Docker Desktop handles this differently
         "1000:1000"
     else
-        string(Base.Libc.geteuid(), ":", Base.Libc.getegid())
+        # Get UID and GID using shell commands for maximum compatibility
+        uid = strip(read(`id -u`, String))
+        gid = strip(read(`id -g`, String))
+        "$(uid):$(gid)"
     end
 
     workdir = "/work"
@@ -456,7 +459,7 @@ function compile(c::DockerCompiler, fileprefix::String)
 
     try
         piperun(
-            `docker run -itd -u $(uid) --name typst-container -v $(pwd()):$(workdir) --rm juliadocs/documenter-Typst:$(c.image_tag)`;
+            `docker run -itd -u $(uid_gid) --name typst-container -v $(pwd()):$(workdir) --rm juliadocs/documenter-Typst:$(c.image_tag)`;
             clearlogs = true
         )
         piperun(`docker exec typst-container bash -c $(script)`)
