@@ -1,0 +1,221 @@
+# Typst Backend Integration Tests
+
+using Test
+using Documenter
+using DocumenterTypst
+
+# Get platform from environment variable
+const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
+
+@info "Testing Typst backend with platform: $PLATFORM"
+
+@testset "Typst Backend: $PLATFORM" begin
+    @testset "Basic Document" begin
+        mktempdir() do dir
+            # Create source directory
+            srcdir = joinpath(dir, "src")
+            mkpath(srcdir)
+
+            # Write a simple document
+            write(
+                joinpath(srcdir, "index.md"), """
+                # Test Document
+
+                This is a test document for platform: **$PLATFORM**.
+
+                ## Features
+
+                - Lists work
+                - **Bold** and *italic*
+                - `inline code`
+
+                ### Code Block
+
+                ```julia
+                x = 1 + 1
+                println("Result: ", x)
+                ```
+                """
+            )
+
+            # Build with Typst
+            makedocs(
+                root = dir,
+                source = "src",
+                build = "build",
+                sitename = "BackendTest",
+                format = DocumenterTypst.TypstWriter.Typst(platform = PLATFORM),
+                pages = ["index.md"],
+                doctest = false,
+                remotes = nothing,
+            )
+
+            # Verify output
+            builddir = joinpath(dir, "build")
+            @test isdir(builddir)
+
+            typfile = joinpath(builddir, "BackendTest.typ")
+            @test isfile(typfile)
+
+            # Verify .typ content
+            content = read(typfile, String)
+            @test contains(content, "Test Document")
+            @test contains(content, "platform: ")
+            @test contains(content, "Lists work")
+
+            # Check PDF was generated (except for platform="none")
+            if PLATFORM != "none"
+                pdffile = joinpath(builddir, "BackendTest.pdf")
+                @test isfile(pdffile)
+                @test filesize(pdffile) > 1000  # PDF should be non-trivial
+            end
+        end
+    end
+
+    @testset "Math Rendering" begin
+        mktempdir() do dir
+            srcdir = joinpath(dir, "src")
+            mkpath(srcdir)
+
+            write(
+                joinpath(srcdir, "index.md"), """
+                # Math Test
+
+                ## LaTeX Math
+
+                Inline: ``\\alpha + \\beta = \\gamma``
+
+                Display:
+                ```math
+                \\sum_{i=1}^n i = \\frac{n(n+1)}{2}
+                ```
+
+                ## Native Typst Math
+
+                ```math typst
+                integral_0^oo e^(-x^2) dif x = sqrt(pi)/2
+                ```
+                """
+            )
+
+            makedocs(
+                root = dir,
+                source = "src",
+                build = "build",
+                sitename = "MathTest",
+                format = DocumenterTypst.TypstWriter.Typst(platform = PLATFORM),
+                pages = ["index.md"],
+                doctest = false,
+                remotes = nothing,
+            )
+
+            typfile = joinpath(dir, "build", "MathTest.typ")
+            @test isfile(typfile)
+
+            content = read(typfile, String)
+            # LaTeX math should use mitex
+            @test contains(content, "#mi(")
+            # Native Typst math should be preserved
+            @test contains(content, "integral")
+        end
+    end
+
+    @testset "Multi-page Document" begin
+        mktempdir() do dir
+            srcdir = joinpath(dir, "src")
+            mkpath(srcdir)
+
+            write(
+                joinpath(srcdir, "index.md"), """
+                # Home
+
+                Welcome to the multi-page test.
+
+                See also [Chapter 1](chapter1.md).
+                """
+            )
+
+            write(
+                joinpath(srcdir, "chapter1.md"), """
+                # Chapter 1
+
+                This is chapter 1.
+
+                [Back to Home](index.md)
+                """
+            )
+
+            makedocs(
+                root = dir,
+                source = "src",
+                build = "build",
+                sitename = "MultiPage",
+                format = DocumenterTypst.TypstWriter.Typst(platform = PLATFORM),
+                pages = [
+                    "Home" => "index.md",
+                    "Chapter 1" => "chapter1.md",
+                ],
+                doctest = false,
+                remotes = nothing,
+            )
+
+            typfile = joinpath(dir, "build", "MultiPage.typ")
+            @test isfile(typfile)
+
+            content = read(typfile, String)
+            @test contains(content, "Welcome to the multi-page test")
+            @test contains(content, "This is chapter 1")
+
+            if PLATFORM != "none"
+                pdffile = joinpath(dir, "build", "MultiPage.pdf")
+                @test isfile(pdffile)
+            end
+        end
+    end
+
+    @testset "Tables and Images" begin
+        mktempdir() do dir
+            srcdir = joinpath(dir, "src")
+            mkpath(srcdir)
+
+            write(
+                joinpath(srcdir, "index.md"), """
+                # Tables and Images
+
+                ## Table
+
+                | Header 1 | Header 2 |
+                |----------|----------|
+                | Cell 1   | Cell 2   |
+                | Cell 3   | Cell 4   |
+
+                ## Special Characters
+
+                Testing escaping: @#*_\\/`<>
+                """
+            )
+
+            makedocs(
+                root = dir,
+                source = "src",
+                build = "build",
+                sitename = "TableTest",
+                format = DocumenterTypst.TypstWriter.Typst(platform = PLATFORM),
+                pages = ["index.md"],
+                doctest = false,
+                remotes = nothing,
+            )
+
+            typfile = joinpath(dir, "build", "TableTest.typ")
+            @test isfile(typfile)
+
+            content = read(typfile, String)
+            @test contains(content, "#table(")
+            @test contains(content, "Header 1")
+            # Check escaping
+            @test contains(content, "\\@")
+        end
+    end
+end
+
+@info "Typst backend tests ($PLATFORM) completed successfully!"

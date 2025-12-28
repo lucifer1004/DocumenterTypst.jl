@@ -207,24 +207,28 @@ julia --project=docs -e '
 echo "Documentation built successfully"
 ```
 
-### Make Integration
+### Build Automation with Just
 
-`Makefile`:
+`justfile`:
 
-```makefile
-.PHONY: docs docs-pdf docs-html
-
+```just
+# Build both HTML and PDF documentation
 docs: docs-html docs-pdf
 
+# Build HTML documentation
 docs-html:
-\t julia --project=docs -e 'using Pkg; Pkg.instantiate(); include("docs/make_html.jl")'
+    julia --project=docs -e 'using Pkg; Pkg.instantiate(); include("docs/make_html.jl")'
 
+# Build PDF documentation
 docs-pdf:
-\t julia --project=docs -e 'using Pkg; Pkg.instantiate(); include("docs/make_pdf.jl")'
+    julia --project=docs -e 'using Pkg; Pkg.instantiate(); include("docs/make_pdf.jl")'
 
+# Clean build artifacts
 clean:
-\t rm -rf docs/build
+    julia -e 'rm("docs/build", recursive=true, force=true)'
 ```
+
+**Note**: [just](https://github.com/casey/just) is a cross-platform command runner that works on Windows, Linux, and macOS.
 
 ## Debugging
 

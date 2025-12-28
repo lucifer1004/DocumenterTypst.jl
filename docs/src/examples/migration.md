@@ -7,6 +7,7 @@ Guide for migrating from Documenter's LaTeX backend to DocumenterTypst.
 ### Step 1: Update Dependencies
 
 **docs/Project.toml** - Add DocumenterTypst:
+
 ```toml
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
@@ -20,6 +21,7 @@ DocumenterTypst = "0.1"  # Add this
 ### Step 2: Update make.jl
 
 **Before**:
+
 ```julia
 using Documenter, MyPackage
 
@@ -31,6 +33,7 @@ makedocs(
 ```
 
 **After**:
+
 ```julia
 using Documenter, DocumenterTypst, MyPackage
 
@@ -57,33 +60,37 @@ That's it! Your markdown files need no changes.
 
 ### Platform Options
 
-| LaTeX | Typst | Notes |
-|-------|-------|-------|
-| `platform="native"` | `platform="native"` | Uses system executable |
-| `platform="docker"` | `platform="docker"` | Uses Docker |
-| `platform="tectonic"` | `platform="typst"` | Use Typst_jll instead |
-| N/A | `platform="none"` | New: source only |
+| LaTeX                 | Typst               | Notes                  |
+| --------------------- | ------------------- | ---------------------- |
+| `platform="native"`   | `platform="native"` | Uses system executable |
+| `platform="docker"`   | `platform="docker"` | Uses Docker            |
+| `platform="tectonic"` | `platform="typst"`  | Use Typst_jll instead  |
+| N/A                   | `platform="none"`   | New: source only       |
 
 ### Math Syntax
 
 LaTeX math **just works** - no changes needed!
 
-```markdown
+`````markdown
 # Works in both backends
-``\\alpha + \\beta = \\gamma``
 
-```math
+`\\alpha + \\beta = \\gamma`
+
+````math
 \\sum_{i=1}^n i = \\frac{n(n+1)}{2}
 \```
-```
+````
+`````
+
+````
 
 ### Custom Styling
 
-| LaTeX | Typst |
-|-------|-------|
-| Custom `.tex` templates | `docs/src/assets/custom.typ` |
-| `\usepackage{...}` | Typst imports in `custom.typ` |
-| LaTeX macros | Typst functions |
+| LaTeX                   | Typst                         |
+| ----------------------- | ----------------------------- |
+| Custom `.tex` templates | `docs/src/assets/custom.typ`  |
+| `\usepackage{...}`      | Typst imports in `custom.typ` |
+| LaTeX macros            | Typst functions               |
 
 ## What Stays the Same
 
@@ -106,12 +113,14 @@ LaTeX math **just works** - no changes needed!
 ### Better Error Messages
 
 **LaTeX**:
+
 ```
 ! Undefined control sequence.
 l.42 \mysterycommand
 ```
 
 **Typst**:
+
 ```
 error: unknown variable: mysterycommand
   ┌─ document.typ:42:2
@@ -136,6 +145,7 @@ If you're using standard Documenter features, migration is seamless.
 **Custom LaTeX packages**: Not supported. Use Typst equivalents in `custom.typ`.
 
 **Example**:
+
 ```latex
 % LaTeX (old)
 \usepackage{tikz}
@@ -157,13 +167,13 @@ If you're using standard Documenter features, migration is seamless.
 
 Tested on Julia documentation (large, complex document):
 
-| Backend | Time | Size |
-|---------|------|------|
-| LaTeX (native) | ~8 min | 2.1 MB |
-| LaTeX (tectonic) | ~5 min | 2.1 MB |
+| Backend             | Time      | Size       |
+| ------------------- | --------- | ---------- |
+| LaTeX (native)      | ~8 min    | 2.1 MB     |
+| LaTeX (tectonic)    | ~5 min    | 2.1 MB     |
 | **DocumenterTypst** | **< 90s** | **2.0 MB** |
 
-*On M4 Max, your results may vary*
+_On M4 Max, your results may vary_
 
 ## Migration Checklist
 
@@ -196,6 +206,7 @@ Compare outputs before fully switching.
 ### GitHub Actions
 
 **Before**:
+
 ```yaml
 - name: Install LaTeX
   run: sudo apt-get install texlive-full
@@ -205,6 +216,7 @@ Compare outputs before fully switching.
 ```
 
 **After**:
+
 ```yaml
 # No LaTeX installation needed!
 
@@ -271,3 +283,4 @@ After migration:
 1. [Customize styling](../manual/styling.md)
 2. [Explore Typst math](../manual/math.md)
 3. [Optimize CI builds](advanced.md#performance-optimization)
+````

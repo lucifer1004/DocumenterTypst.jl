@@ -53,22 +53,24 @@ This project follows the [Julia Community Standards](https://julialang.org/commu
 
 ### Code Style
 
-We use [JuliaFormatter.jl](https://github.com/domluna/JuliaFormatter.jl) with `BlueStyle`.
+We use [Runic.jl](https://github.com/fredrikekre/Runic.jl) for Julia code formatting.
 
 **Format your code before committing**:
 
 ```julia
-using JuliaFormatter
-format(".")
+using Pkg
+Pkg.add("Runic")
+using Runic
+Runic.main(["--verbose", "."])
 ```
 
-Or run:
+Or use the justfile:
 
 ```bash
-julia -e 'using JuliaFormatter; format(".")'
+just format
 ```
 
-CI will check formatting automatically.
+CI will check formatting automatically using Runic v1.2.
 
 ## Testing
 
@@ -168,11 +170,29 @@ For trivial changes (typo fixes, CI tweaks), add the `Skip Changelog` label to y
 
 ### Before Submitting
 
-- [ ] Code is formatted (`julia -e 'using JuliaFormatter; format(".")'`)
+- [ ] Code is formatted (`just format` or Runic.jl)
 - [ ] Tests pass locally (`Pkg.test()`)
+- [ ] Typst backend tests pass (if applicable)
+- [ ] Spell check passes (`typos`)
 - [ ] Changelog updated (if needed)
 - [ ] Documentation updated (if adding features)
 - [ ] Commit messages are clear
+
+### CI Checks
+
+Your PR will be automatically checked for:
+
+- ✅ Julia code formatting (Runic)
+- ✅ Spell checking (Typos)
+- ✅ File formatting (Prettier)
+- ✅ Changelog update
+- ✅ Tests on Linux/macOS/Windows
+- ✅ Typst backend tests
+- ✅ Documentation build
+- ✅ Link checking
+- ✅ Code coverage
+
+All checks must pass before merging.
 
 ### PR Description
 

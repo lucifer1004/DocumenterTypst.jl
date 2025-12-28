@@ -90,7 +90,7 @@ sum_(i=1)^n i = (n(n+1))/2
 #### Inline
 
 ```markdown
-The formula ``sum_(i=1)^n i`` calculates the sum.
+The formula `sum_(i=1)^n i` calculates the sum.
 ```
 
 **Note**: Native Typst inline math syntax requires Typst context (`.typ` files or raw Typst blocks).
@@ -230,4 +230,3 @@ Check `typst-debug/*.typ` to see how math was converted.
 - [Typst Math Documentation](https://typst.app/docs/reference/math/)
 - [mitex Documentation](https://github.com/mitex-rs/mitex)
 - [LaTeX to Typst Converter](https://github.com/mitex-rs/mitex)
-

@@ -126,6 +126,7 @@ julia docs/make.jl
 ```
 
 Output location will be printed:
+
 ```
 ┌ Info: Typst sources copied for debugging to /path/to/typst-debug
 ```
@@ -150,11 +151,11 @@ Override default styling by creating `docs/src/assets/custom.typ`:
 #let config = (
   light-blue: rgb("3498db"),
   dark-blue: rgb("2c3e50"),
-  
+
   // Custom font sizes
   text-size: 12pt,
   code-size: 10pt,
-  
+
   // Custom fonts
   text-font: ("Times New Roman", "DejaVu Serif"),
   code-font: ("Fira Code", "DejaVu Sans Mono"),

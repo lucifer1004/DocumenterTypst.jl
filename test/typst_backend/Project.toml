@@ -1,0 +1,11 @@
+name = "DocumenterTypstBackendTests"
+uuid = "7f5df0b9-caf7-4492-9748-80029d1f4c2a"
+
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterTypst = "d7fd56dd-41bc-4b2d-b658-79a5840b2e09"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Documenter = "1"
+julia = "1.10"

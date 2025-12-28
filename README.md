@@ -102,7 +102,7 @@ format = DocumenterTypst.Typst(platform = "none")
 
 Backward compatible with existing Documenter documentation:
 
-````markdown
+`````markdown
 Inline: `\\alpha + \\beta`
 
 Display:
@@ -111,7 +111,9 @@ Display:
 \\sum_{i=1}^n i = \\frac{n(n+1)}{2}
 \```
 ````
-````
+`````
+
+`````
 
 ### Native Typst Math
 
@@ -121,7 +123,8 @@ For new projects, you can use Typst's native math syntax:
 ````math typst
 sum_(i=1)^n i = (n(n+1))/2
 \```
-````
+`````
+
 ````
 
 ## Custom Styling
@@ -199,26 +202,33 @@ For detailed guidelines, see [CONTRIBUTING](docs/src/contributing.md).
 # Clone and setup
 git clone https://github.com/lucifer1004/DocumenterTypst.jl.git
 cd DocumenterTypst.jl
-make dev
+just dev
 
 # Run tests
-make test
+just test
 
-# Format code
-make format
+# Format code with Runic
+just format
 
 # Build HTML docs
-make docs
+just docs
 
 # Build Typst/PDF docs
-make docs-typst
+just docs-typst
 
 # Generate Typst source only (no compilation)
-make docs-typst-source
+just docs-typst-source
 
 # Generate changelog
-make changelog
+just changelog
 ```
+
+**Note**: This project uses [just](https://github.com/casey/just), a cross-platform command runner. Install it via:
+
+- **macOS/Linux**: `brew install just` or `cargo install just`
+- **Windows**: `cargo install just` or `scoop install just`
+
+See the [just installation guide](https://github.com/casey/just#installation) for more options.
 
 ### Changelog Requirements
 
@@ -236,3 +246,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Powered by [Typst](https://typst.app/)
 - LaTeX math rendering via [mitex](https://github.com/mitex-rs/mitex)
 - Inspired by [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl)
+````

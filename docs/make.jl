@@ -41,7 +41,7 @@ if !isnothing(Changelog)
         Changelog.CommonMark(),
         joinpath(@__DIR__, "..", "CHANGELOG.md"),
         joinpath(@__DIR__, "src", "release-notes.md");
-        repo="lucifer1004/DocumenterTypst.jl",
+        repo = "lucifer1004/DocumenterTypst.jl"
     )
 end
 
@@ -53,11 +53,11 @@ else
 end
 
 makedocs(;
-    modules=[DocumenterTypst],
-    sitename="DocumenterTypst.jl",
-    authors="Gabriel Wu and contributors",
-    checkdocs=:exports,
-    format=if output_format == :typst
+    modules = [DocumenterTypst],
+    sitename = "DocumenterTypst.jl",
+    authors = "Gabriel Wu and contributors",
+    checkdocs = :exports,
+    format = if output_format == :typst
         # Typst format: determine compilation platform
         typst_platform = if "native" in ARGS
             "native"
@@ -78,21 +78,21 @@ makedocs(;
             "dev"
         end
 
-        DocumenterTypst.TypstWriter.Typst(; platform=typst_platform, version=version)
+        DocumenterTypst.TypstWriter.Typst(; platform = typst_platform, version = version)
     else
         # HTML format
         Documenter.HTML(;
-            prettyurls=(!("local" in ARGS)),
-            canonical="https://lucifer1004.github.io/DocumenterTypst.jl",
-            assets=String[],
-            repolink="https://github.com/lucifer1004/DocumenterTypst.jl",
+            prettyurls = (!("local" in ARGS)),
+            canonical = "https://lucifer1004.github.io/DocumenterTypst.jl",
+            assets = String[],
+            repolink = "https://github.com/lucifer1004/DocumenterTypst.jl"
         )
     end,
-    build=output_format == :typst ? "build-typst" : "build",
-    linkcheck="linkcheck" in ARGS,
-    warnonly=("strict=false" in ARGS),
-    doctest=("doctest=only" in ARGS) ? :only : true,
-    pages=[
+    build = output_format == :typst ? "build-typst" : "build",
+    linkcheck = "linkcheck" in ARGS,
+    warnonly = ("strict=false" in ARGS),
+    doctest = ("doctest=only" in ARGS) ? :only : true,
+    pages = [
         "Home" => "index.md",
         "Manual" => [
             "Getting Started" => "manual/getting_started.md",
@@ -109,7 +109,7 @@ makedocs(;
         "API Reference" => "api/reference.md",
         "Release Notes" => "release-notes.md",
         "Contributing" => "contributing.md",
-    ],
+    ]
 )
 
 if output_format == :typst
@@ -120,22 +120,22 @@ if output_format == :typst
             if startswith(f, "DocumenterTypst") && endswith(f, ".pdf")
                 mv(
                     joinpath(@__DIR__, "build-typst", f),
-                    joinpath(@__DIR__, "build-typst", "commit", f),
+                    joinpath(@__DIR__, "build-typst", "commit", f)
                 )
             end
         end
     end
     deploydocs(;
-        repo="github.com/lucifer1004/DocumenterTypst.jl",
-        target="pdf/build-typst/commit",
-        branch="gh-pages-typst",
-        forcepush=true,
+        repo = "github.com/lucifer1004/DocumenterTypst.jl",
+        target = "pdf/build-typst/commit",
+        branch = "gh-pages-typst",
+        forcepush = true
     )
 else
     # Deploy HTML to gh-pages branch
     deploydocs(;
-        repo="github.com/lucifer1004/DocumenterTypst.jl",
-        devbranch="main",
-        push_preview=true,
+        repo = "github.com/lucifer1004/DocumenterTypst.jl",
+        devbranch = "main",
+        push_preview = true
     )
 end

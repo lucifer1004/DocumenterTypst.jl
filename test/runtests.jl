@@ -8,11 +8,8 @@ using Logging
 # Suppress @info output during tests for cleaner output
 Logging.disable_logging(Logging.Info)
 using DocumenterTypst.TypstWriter:
-    TypstWriter,
-    escape_for_typst_string,
-    typstesc,
-    typstescstr,
-    writer_supports_ansicolor
+    TypstWriter, escape_for_typst_string, typstesc,
+    typstescstr, writer_supports_ansicolor
 
 # ============================================================================
 # Test Helpers
@@ -36,15 +33,15 @@ function render_to_typst(markdown::String; sitename = "Test", pages = ["index.md
         mkpath(srcdir)
         write(joinpath(srcdir, "index.md"), markdown)
 
-        makedocs(
+        makedocs(;
             root = dir,
             source = "src",
             build = "build",
             sitename = sitename,
-            format = DocumenterTypst.Typst(platform = "none"),
+            format = DocumenterTypst.Typst(; platform = "none"),
             pages = pages,
             doctest = false,
-            remotes = nothing,
+            remotes = nothing
         )
 
         # Read generated .typ file
@@ -98,7 +95,28 @@ end
             # Using string() to avoid $ triggering Documenter warnings
             test_chars = string('@', '#', '*', '_', '\\', '$', '/', '`', '<', '>')
             expected_str = string('@', '#', '*', '_', '\\', '\\', '$', '/', '`', '<', '>')
-            expected = string('\\', '@', '\\', '#', '\\', '*', '\\', '_', '\\', '\\', '\\', '$', '\\', '/', '\\', '`', '\\', '<', '\\', '>')
+            expected = string(
+                '\\',
+                '@',
+                '\\',
+                '#',
+                '\\',
+                '*',
+                '\\',
+                '_',
+                '\\',
+                '\\',
+                '\\',
+                '$',
+                '\\',
+                '/',
+                '\\',
+                '`',
+                '\\',
+                '<',
+                '\\',
+                '>'
+            )
             @test typstesc(test_chars) == expected
             @test typstesc("normal text") == "normal text"
             @test typstesc("") == ""
@@ -157,18 +175,22 @@ end
 
             # Combined formatting - exact structure verification
             output = render_to_typst("**bold** and *italic* and `code`")
-            @test strip(output) == "#strong([bold]) and #emph([italic]) and  #raw(\"code\", block: false)"
+            @test strip(output) ==
+                "#strong([bold]) and #emph([italic]) and  #raw(\"code\", block: false)"
         end
 
         @testset "Headings" begin
             output = render_to_typst("# Level 1")
-            @test strip(output) == "#extended_heading(level: 1, within-block: false, [Level 1])\n\n #label(\"index.md#Level-1\")"
+            @test strip(output) ==
+                "#extended_heading(level: 1, within-block: false, [Level 1])\n\n #label(\"index.md#Level-1\")"
 
             output = render_to_typst("## Level 2")
-            @test strip(output) == "#extended_heading(level: 2, within-block: false, [Level 2])\n\n #label(\"index.md#Level-2\")"
+            @test strip(output) ==
+                "#extended_heading(level: 2, within-block: false, [Level 2])\n\n #label(\"index.md#Level-2\")"
 
             output = render_to_typst("### Level 3")
-            @test strip(output) == "#extended_heading(level: 3, within-block: false, [Level 3])\n\n #label(\"index.md#Level-3\")"
+            @test strip(output) ==
+                "#extended_heading(level: 3, within-block: false, [Level 3])\n\n #label(\"index.md#Level-3\")"
         end
 
         @testset "Paragraphs" begin
@@ -220,13 +242,15 @@ end
             @test contains(output, "- Level 1")
             @test contains(output, "  - Level 2")
             @test contains(output, "    - Level 3")
-            
+
             # Mixed list with content and nesting
-            output = render_to_typst("- Item with text\n    - Nested item\n- Another top item")
+            output = render_to_typst(
+                "- Item with text\n    - Nested item\n- Another top item"
+            )
             @test contains(output, "- Item with text")
             @test contains(output, "  - Nested item")
             @test contains(output, "- Another top item")
-            
+
             # Edge case: Deep nesting (Markdown parser handles depth)
             # MarkdownAST will parse this according to actual indentation
             output = render_to_typst("- L1\n    - L2\n        - L3\n            - L4")
@@ -234,15 +258,17 @@ end
             @test contains(output, "  - L2")
             @test contains(output, "    - L3")
             @test contains(output, "      - L4")
-            
+
             # Edge case: List with paragraph breaks
             output = render_to_typst("- Item 1\n\n  Paragraph in item 1\n- Item 2")
             @test contains(output, "- Item 1")
             @test contains(output, "Paragraph in item 1")
             @test contains(output, "- Item 2")
-            
+
             # Edge case: Mixed ordered/unordered nesting
-            output = render_to_typst("1. First ordered\n    - Nested unordered\n2. Second ordered")
+            output = render_to_typst(
+                "1. First ordered\n    - Nested unordered\n2. Second ordered"
+            )
             @test contains(output, "+ First ordered")
             @test contains(output, "  - Nested unordered")
             @test contains(output, "+ Second ordered")
@@ -261,26 +287,33 @@ end
         @testset "Admonitions" begin
             # Test each known category with exact output
             output = render_to_typst("!!! note \"Title\"\n    Content")
-            @test strip(output) == "#admonition(type: \"note\", title: \"Title\")[\nContent\n]"
+            @test strip(output) ==
+                "#admonition(type: \"note\", title: \"Title\")[\nContent\n]"
 
             output = render_to_typst("!!! warning \"Title\"\n    Content")
-            @test strip(output) == "#admonition(type: \"warning\", title: \"Title\")[\nContent\n]"
+            @test strip(output) ==
+                "#admonition(type: \"warning\", title: \"Title\")[\nContent\n]"
 
             output = render_to_typst("!!! danger \"Title\"\n    Content")
-            @test strip(output) == "#admonition(type: \"danger\", title: \"Title\")[\nContent\n]"
+            @test strip(output) ==
+                "#admonition(type: \"danger\", title: \"Title\")[\nContent\n]"
 
             output = render_to_typst("!!! info \"Title\"\n    Content")
-            @test strip(output) == "#admonition(type: \"info\", title: \"Title\")[\nContent\n]"
+            @test strip(output) ==
+                "#admonition(type: \"info\", title: \"Title\")[\nContent\n]"
 
             output = render_to_typst("!!! tip \"Title\"\n    Content")
-            @test strip(output) == "#admonition(type: \"tip\", title: \"Title\")[\nContent\n]"
+            @test strip(output) ==
+                "#admonition(type: \"tip\", title: \"Title\")[\nContent\n]"
 
             output = render_to_typst("!!! compat \"Title\"\n    Content")
-            @test strip(output) == "#admonition(type: \"compat\", title: \"Title\")[\nContent\n]"
+            @test strip(output) ==
+                "#admonition(type: \"compat\", title: \"Title\")[\nContent\n]"
 
             # Unknown category should default to "default"
             output = render_to_typst("!!! custom \"Title\"\n    Content")
-            @test strip(output) == "#admonition(type: \"default\", title: \"Title\")[\nContent\n]"
+            @test strip(output) ==
+                "#admonition(type: \"default\", title: \"Title\")[\nContent\n]"
         end
 
         @testset "Tables" begin
@@ -357,7 +390,7 @@ end
                 ```julia
                 x = 1 + 1
                 ```
-                """,
+                """
             )
 
             makedocs(
@@ -368,7 +401,7 @@ end
                 format = DocumenterTypst.Typst(platform = "none"),
                 pages = ["index.md"],
                 doctest = false,
-                remotes = nothing,
+                remotes = nothing
             )
 
             typfile = joinpath(dir, "build", "BasicTest.typ")
@@ -413,7 +446,7 @@ end
                 ```math typst
                 sum_(i=1)^n i
                 ```
-                """,
+                """
             )
 
             makedocs(
@@ -424,7 +457,7 @@ end
                 format = DocumenterTypst.Typst(platform = "none"),
                 pages = ["index.md"],
                 doctest = false,
-                remotes = nothing,
+                remotes = nothing
             )
 
             typfile = joinpath(dir, "build", "MathTest.typ")
@@ -476,7 +509,7 @@ end
                 | A | B |
                 |---|---|
                 | 1 | 2 |
-                """,
+                """
             )
 
             makedocs(
@@ -487,7 +520,7 @@ end
                 format = DocumenterTypst.Typst(platform = "none"),
                 pages = ["index.md"],
                 doctest = false,
-                remotes = nothing,
+                remotes = nothing
             )
 
             typfile = joinpath(dir, "build", "RichTest.typ")
@@ -519,7 +552,7 @@ end
                 format = DocumenterTypst.Typst(platform = "none", version = "1.2.3"),
                 pages = ["index.md"],
                 doctest = false,
-                remotes = nothing,
+                remotes = nothing
             )
 
             # File should be named with version
@@ -545,7 +578,7 @@ end
                 format = DocumenterTypst.Typst(platform = "none"),
                 pages = ["index.md"],
                 doctest = false,
-                remotes = nothing,
+                remotes = nothing
             )
 
             # custom.typ should be copied to build dir with exact content
@@ -575,7 +608,7 @@ end
                 format = DocumenterTypst.Typst(platform = "none"),
                 pages = ["index.md"],
                 doctest = false,
-                remotes = nothing,
+                remotes = nothing
             )
 
             content = read(joinpath(dir, "build", "ImgTest.typ"), String)
@@ -601,7 +634,7 @@ end
                 format = DocumenterTypst.Typst(platform = "none"),
                 pages = ["index.md", "page2.md"],
                 doctest = false,
-                remotes = nothing,
+                remotes = nothing
             )
 
             content = read(joinpath(dir, "build", "Multi.typ"), String)

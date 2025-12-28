@@ -85,8 +85,8 @@ make_label_id(doc, "build-typst/cpp.md", "C++")
 ```
 """
 function make_label_id(
-    doc::Documenter.Document, file::AbstractString, label::AbstractString
-)
+        doc::Documenter.Document, file::AbstractString, label::AbstractString
+    )
     # Normalize path separators
     normalized_file = replace(file, "\\" => "/")
 
@@ -141,8 +141,8 @@ printed in the document and also appended to the output PDF file name.
 struct Typst <: Documenter.Writer
     platform::String
     version::String
-    typst::Union{Cmd,String,Nothing}
-    function Typst(; platform="typst", version=get(ENV, "TRAVIS_TAG", ""), typst=nothing)
+    typst::Union{Cmd, String, Nothing}
+    function Typst(; platform = "typst", version = get(ENV, "TRAVIS_TAG", ""), typst = nothing)
         platform ∈ ("native", "typst", "docker", "none") ||
             throw(ArgumentError("unknown platform: $platform"))
         return new(platform, string(version), typst)
@@ -161,9 +161,9 @@ writer_supports_ansicolor(::Typst) = false
 # Implement the Documenter runner interface for FormatSelector
 import Documenter: Selectors
 function Selectors.runner(
-    ::Type{Documenter.FormatSelector}, fmt::Typst, doc::Documenter.Document
-)
-    TypstWriter.render(doc, fmt)
+        ::Type{Documenter.FormatSelector}, fmt::Typst, doc::Documenter.Document
+    )
+    return TypstWriter.render(doc, fmt)
 end
 
 # ============================================================================
@@ -177,7 +177,7 @@ Immutable global state built once at the start of rendering.
 Contains lookup tables and cached values that don't change during the rendering process.
 """
 struct RenderState
-    lowercase_anchors::Dict{String,String}  # lowercase key -> original label
+    lowercase_anchors::Dict{String, String}  # lowercase key -> original label
     build_path::String  # Pre-normalized build path (for performance)
 end
 
@@ -187,7 +187,7 @@ end
 Mutable rendering context that changes as we traverse the document.
 Implements the IO interface for convenient printing.
 """
-mutable struct Context{I<:IO} <: IO
+mutable struct Context{I <: IO} <: IO
     io::I
     doc::Documenter.Document
     state::RenderState
@@ -199,10 +199,10 @@ mutable struct Context{I<:IO} <: IO
     in_block::Bool    # Are we inside a block container (admonition, blockquote, etc)?
 
     # Per-page state (reset for each page)
-    footnote_defs::Dict{String,Node}  # Footnote id -> definition node
+    footnote_defs::Dict{String, Node}  # Footnote id -> definition node
 end
 
-function Context(io::I, doc::Documenter.Document, state::RenderState) where {I<:IO}
+function Context(io::I, doc::Documenter.Document, state::RenderState) where {I <: IO}
     return Context{I}(io, doc, state, "", 1, false, false, Dict())
 end
 
@@ -234,7 +234,7 @@ Recursively collect all footnote definitions from an AST.
 Handles both regular AST nodes and special cases like `DocsNode`, which contains
 separate AST trees in its `mdasts` field that need to be scanned independently.
 """
-function collect_footnotes!(defs::Dict{String,Node}, node::Node)
+function collect_footnotes!(defs::Dict{String, Node}, node::Node)
     if node.element isa MarkdownAST.FootnoteDefinition
         defs[node.element.id] = node
     end
@@ -256,7 +256,7 @@ end
 const STYLE = joinpath(dirname(@__FILE__), "..", "assets", "documenter.typ")
 
 const DOCUMENT_STRUCTURE = (
-    "part", "chapter", "section", "subsection", "subsubsection", "paragraph", "subparagraph"
+    "part", "chapter", "section", "subsection", "subsubsection", "paragraph", "subparagraph",
 )
 
 """
@@ -275,7 +275,7 @@ using normalized paths and anchor labels (which include -nth suffixes for unique
 Optimized to minimize function calls and string operations.
 """
 function build_anchor_lookup(doc::Documenter.Document)
-    lookup = Dict{String,String}()
+    lookup = Dict{String, String}()
 
     for (_, filedict) in doc.internal.headers.map
         for (file, anchors) in filedict
@@ -294,7 +294,7 @@ function build_anchor_lookup(doc::Documenter.Document)
     return lookup
 end
 
-function render(doc::Documenter.Document, settings::Typst=Typst())
+function render(doc::Documenter.Document, settings::Typst = Typst())
     @info "TypstWriter: creating the Typst file."
     return mktempdir() do path
         cp(joinpath(doc.user.root, doc.user.build), joinpath(path, "build"))
@@ -339,20 +339,20 @@ function render(doc::Documenter.Document, settings::Typst=Typst())
             # source files over to a directory under doc.user.root.
             if haskey(ENV, "DOCUMENTER_TYPST_DEBUG")
                 dst = if isempty(ENV["DOCUMENTER_TYPST_DEBUG"])
-                    mktempdir(doc.user.root; cleanup=false)
+                    mktempdir(doc.user.root; cleanup = false)
                 else
                     joinpath(doc.user.root, ENV["DOCUMENTER_TYPST_DEBUG"])
                 end
-                sources = cp(pwd(), dst; force=true)
+                sources = cp(pwd(), dst; force = true)
                 @info "Typst sources copied for debugging to $(sources)"
             end
 
             # If the build was successful, copy the PDF or the Typst source to the .build directory
             if status && (settings.platform != "none")
                 pdffile = "$(fileprefix).pdf"
-                cp(pdffile, joinpath(doc.user.root, doc.user.build, pdffile); force=true)
+                cp(pdffile, joinpath(doc.user.root, doc.user.build, pdffile); force = true)
             elseif status && (settings.platform == "none")
-                cp(pwd(), joinpath(doc.user.root, doc.user.build); force=true)
+                cp(pwd(), joinpath(doc.user.root, doc.user.build); force = true)
             else
                 error("Compiling the .typ file failed. See logs for more information.")
             end
@@ -426,13 +426,13 @@ Returns true on success, throws on failure.
 function compile(c::NativeCompiler, fileprefix::String)
     Sys.which("typst") === nothing && error("typst command not found")
     @info "TypstWriter: using native typst."
-    piperun(`$(c.typst_cmd) compile $(fileprefix).typ`; clearlogs=true)
+    piperun(`$(c.typst_cmd) compile $(fileprefix).typ`; clearlogs = true)
     return true
 end
 
 function compile(c::TypstJllCompiler, fileprefix::String)
     @info "TypstWriter: using typst (via Typst_jll)."
-    piperun(`$(typst_exe()) compile $(fileprefix).typ`; clearlogs=true)
+    piperun(`$(typst_exe()) compile $(fileprefix).typ`; clearlogs = true)
     return true
 end
 
@@ -450,7 +450,7 @@ function compile(c::DockerCompiler, fileprefix::String)
     try
         piperun(
             `docker run -itd -u zeptodoctor --name typst-container -v $(pwd()):/mnt/ --rm juliadocs/documenter-Typst:$(c.image_tag)`;
-            clearlogs=true,
+            clearlogs = true
         )
         piperun(`docker exec -u zeptodoctor typst-container bash -c $(script)`)
         piperun(`docker cp typst-container:/home/zeptodoctor/build/$(fileprefix).pdf .`)
@@ -480,33 +480,32 @@ function compile_typ(::Documenter.Document, settings::Typst, fileprefix::String)
     try
         return compile(compiler, fileprefix)
     catch err
-        logs = cp(pwd(), mktempdir(; cleanup=false); force=true)
+        logs = cp(pwd(), mktempdir(; cleanup = false); force = true)
         @error "TypstWriter: compilation failed. " *
-            "Logs and partial output can be found in $(Documenter.locrepr(logs))." exception =
-            err
+            "Logs and partial output can be found in $(Documenter.locrepr(logs))." exception = err
         return false
     end
 end
 
-function piperun(cmd; clearlogs=false)
+function piperun(cmd; clearlogs = false)
     verbose = "--verbose" in ARGS || get(ENV, "DOCUMENTER_VERBOSE", "false") == "true"
     return run(
         if verbose
             cmd
         else
             pipeline(
-            cmd;
-            stdout="TypstWriter.stdout",
-            stderr="TypstWriter.stderr",
-            append=(!clearlogs),
-        )
+                cmd;
+                stdout = "TypstWriter.stdout",
+                stderr = "TypstWriter.stderr",
+                append = (!clearlogs)
+            )
         end,
     )
 end
 
 function writeheader(io::IO, doc::Documenter.Document, settings::Typst)
     custom = joinpath(doc.user.root, doc.user.source, "assets", "custom.typ")
-    isfile(custom) ? cp(custom, "custom.typ"; force=true) : touch("custom.typ")
+    isfile(custom) ? cp(custom, "custom.typ"; force = true) : touch("custom.typ")
 
     preamble = """
     // Import templates
@@ -697,7 +696,7 @@ typst(io::Context, node::Node, ::Documenter.MultiOutput) = typst(io, node.childr
 function typst(io::Context, node::Node, moe::Documenter.MultiOutputElement)
     return Base.invokelatest(typst, io, node, moe.element)
 end
-function typst(io::Context, ::Node, d::Dict{MIME,Any})
+function typst(io::Context, ::Node, d::Dict{MIME, Any})
     filename = String(rand('a':'z', 7))
     if haskey(d, MIME"image/png"())
         write("$(filename).png", base64decode(d[MIME"image/png"()]))
@@ -729,7 +728,7 @@ function typst(io::Context, node::Node, heading::MarkdownAST.Heading)
     # Use io.in_block to determine if we're inside a container
     _print(
         io,
-        "#extended_heading(level: $(min(io.depth + N - 1, length(DOCUMENT_STRUCTURE))), within-block: $(string(io.in_block)), [",
+        "#extended_heading(level: $(min(io.depth + N - 1, length(DOCUMENT_STRUCTURE))), within-block: $(string(io.in_block)), ["
     )
     io.in_header = true
     typst(io, node.children)
@@ -766,7 +765,7 @@ function typst(io::Context, ::Node, code::MarkdownAST.CodeBlock)
 end
 
 function typst(io::Context, node::Node, ::Documenter.MultiCodeBlock)
-    typst(io, node, join_multiblock(node))
+    return typst(io, node, join_multiblock(node))
 end
 function join_multiblock(node::Node)
     @assert node.element isa Documenter.MultiCodeBlock
@@ -839,19 +838,19 @@ end
 
 function typst_list(io::Context, node::Node, list::MarkdownAST.List, depth::Int)
     symbol = list.type === :ordered ? '+' : '-'
-    indent = "  " ^ depth  # 2 spaces per depth level
-    
+    indent = "  "^depth  # 2 spaces per depth level
+
     if depth == 0
         _println(io)
     end
-    
+
     for item in node.children
         _print(io, indent, symbol, " ")
-        
+
         # Set in_block to control paragraph spacing in list items
         old_in_block = io.in_block
         io.in_block = true
-        
+
         # Process children of the item
         for (i, child) in enumerate(item.children)
             if child.element isa MarkdownAST.List
@@ -866,11 +865,11 @@ function typst_list(io::Context, node::Node, list::MarkdownAST.List, depth::Int)
                 typst(io, child)
             end
         end
-        
+
         io.in_block = old_in_block
         # No extra newline - Paragraph already provides one
     end
-    
+
     return nothing
 end
 
@@ -956,8 +955,7 @@ function typst(io::Context, node::Node, image::MarkdownAST.Image)
     _println(io, "image(")
 
     url = if Documenter.isabsurl(image.destination)
-        @warn "images with absolute URLs not supported in Typst output in $(Documenter.locrepr(io.filename))" url =
-            image.destination
+        @warn "images with absolute URLs not supported in Typst output in $(Documenter.locrepr(io.filename))" url = image.destination
         image.destination
     elseif startswith(image.destination, '/')
         # URLs starting with a / are assumed to be relative to the document's root
@@ -1007,7 +1005,7 @@ function typst(io::Context, ::Node, f::MarkdownAST.FootnoteLink)
         # Render the footnote content inline
         # If the content is a single paragraph, render its children directly to avoid extra newlines
         if length(def_node.children) == 1 &&
-            first(def_node.children).element isa MarkdownAST.Paragraph
+                first(def_node.children).element isa MarkdownAST.Paragraph
             typst(io, first(def_node.children).children)
         else
             typst(io, def_node.children)
@@ -1078,7 +1076,7 @@ function typst(io::Context, node::Node, link::MarkdownAST.Link)
 
         if !is_external_url && occursin(".md#", link.destination)
             # Cross-file reference: other.md#section or path/other.md#section
-            file, target = split(link.destination, ".md#"; limit=2)
+            file, target = split(link.destination, ".md#"; limit = 2)
             file = file * ".md"  # Add back the .md extension
             # Convert to full path with build prefix
             full_path = with_build_prefix(io.state, file)
@@ -1121,7 +1119,7 @@ typst(::Context, ::Node, ::Documenter.SetupNode) = nothing
 function typst(io::Context, ::Node, value::MarkdownAST.JuliaValue)
     ref_type = typeof(value.ref)
     ref_value = value.ref
-    @warn string("Unexpected Julia interpolation of type ", ref_type, " in the Markdown.") value=ref_value
+    @warn string("Unexpected Julia interpolation of type ", ref_type, " in the Markdown.") value = ref_value
     return typstesc(io, string(ref_value))
 end
 
@@ -1134,14 +1132,14 @@ typst(io::Context, ::Node, ::MarkdownAST.LineBreak) = _println(io, "#linebreak()
 typst(io::Context, ::Node, ::MarkdownAST.SoftBreak) = _print(io, "#linebreak(weak: true)")  # Weak break - may or may not break
 typst(io::Context, ::Node, ::MarkdownAST.Backslash) = _print(io, "\\\\")  # Literal backslash: need \\ in Typst to display \
 
-const _typstescape_chars = Dict{Char,AbstractString}()
+const _typstescape_chars = Dict{Char, AbstractString}()
 # Build escape map for Typst special characters
 # Using Char literals instead of string with $ to avoid Documenter warnings
 for ch in ['@', '#', '*', '_', '\\', '$', '/', '`', '<', '>']
     _typstescape_chars[ch] = string("\\", ch)
 end
 
-const _typstescape_chars_in_string = Dict{Char,AbstractString}()
+const _typstescape_chars_in_string = Dict{Char, AbstractString}()
 for ch in ['"', '\\']
     _typstescape_chars_in_string[ch] = string("\\", ch)
 end
@@ -1203,7 +1201,7 @@ end
 
 files!(out, s::AbstractString, depth) = push!(out, ("", s, depth))
 
-function files!(out, p::Pair{<:AbstractString,<:Any}, depth)
+function files!(out, p::Pair{<:AbstractString, <:Any}, depth)
     # Hack time. Because of Julia's typing, something like
     # `"Introduction" => "index.md"` may get typed as a `Pair{String,Any}`!
     if p[2] isa AbstractString
@@ -1215,6 +1213,6 @@ function files!(out, p::Pair{<:AbstractString,<:Any}, depth)
     return out
 end
 
-files(v::Vector) = files!(Tuple{String,String,Int}[], v, 0)
+files(v::Vector) = files!(Tuple{String, String, Int}[], v, 0)
 
 end

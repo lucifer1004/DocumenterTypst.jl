@@ -2,3 +2,4 @@ Manifest*.toml
 /*.md
 !/README.md
 /docs/build*
+/test/typst_backend/builds/

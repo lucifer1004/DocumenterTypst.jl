@@ -21,7 +21,7 @@ makedocs(
 
 Create `docs/src/index.md`:
 
-`````markdown
+````markdown
 # MyPackage
 
 Welcome to the documentation!
@@ -32,7 +32,7 @@ Welcome to the documentation!
 using Pkg
 Pkg.add("MyPackage")
 ```
-`````
+````
 
 `````
 

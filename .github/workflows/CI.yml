@@ -1,11 +1,15 @@
-# Detailed CI workflow for DocumenterTypst
+# Comprehensive CI workflow for DocumenterTypst.jl
 #
-# This workflow demonstrates a complete CI setup with:
-# - Multi-platform testing
-# - Code coverage
+# Features:
+# - Multi-platform testing (Linux, macOS, Windows)
+# - Typst backend specific tests
+# - Code coverage (Codecov + Coveralls)
 # - Documentation building
-# - PDF artifact uploads
-# - Automated releases
+# - Code formatting (Runic)
+# - Spell checking (Typos)
+# - Link checking
+# - Prettier formatting
+# - Changelog enforcement
 
 name: CI
 
@@ -13,19 +17,25 @@ on:
   push:
     branches:
       - main
-    tags: ["*"]
+      - 'release-*'
+    tags: '*'
   pull_request:
   workflow_dispatch:
 
 concurrency:
-  # Cancel intermediate builds on new pushes to save CI resources
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  # Improved concurrency control following Documenter.jl pattern
+  # group by workflow and ref; for PRs limit to 1 concurrent job
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref != 'refs/heads/main' || github.run_number }}
+  # Cancel intermediate builds, but only if it is a pull request build
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
-  # Check for changelog updates on PRs
+  # ============================================================================
+  # Code Quality Checks
+  # ============================================================================
+
   changelog:
-    name: Check Changelog
+    name: Changelog Check
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -33,8 +43,41 @@ jobs:
     steps:
       - uses: dangoslen/changelog-enforcer@v3
         with:
-          changeLogPath: "CHANGELOG.md"
-          skipLabels: "Skip Changelog,dependencies"
+          changeLogPath: 'CHANGELOG.md'
+          skipLabels: 'Skip Changelog,dependencies'
+
+  runic:
+    name: "Runic (Julia code formatting)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - uses: fredrikekre/runic-action@v1
+        with:
+          version: '1.5'
+
+  prettier:
+    name: Prettier (formatting)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actionsx/prettier@v3
+        with:
+          args: --check .
+
+  typos:
+    name: Spell Check with Typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: crate-ci/typos@master
+
+  # ============================================================================
+  # Main Test Suite
+  # ============================================================================
 
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
@@ -46,71 +89,147 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.10" # Minimum supported version
-          - "1.12"
-          - "latest" # Latest stable 1.x release
+          - '1.6'  # Minimum supported version
+          - '1'     # Latest stable
+          - 'nightly'
         os:
           - ubuntu-latest
           - macos-latest
           - windows-latest
         arch:
-          - x64
+          - default
+        include:
+          - os: ubuntu-latest
+            version: '1'
+            arch: x86
         exclude:
-          # Reduce redundancy: test old Julia only on Linux
           - os: macos-latest
-            version: "1.10"
-          - os: windows-latest
-            version: "1.10"
+            version: '1.6'
+            arch: default
+    continue-on-error: ${{ matrix.allow_failure || false }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+        uses: actions/checkout@v6
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+          show-versioninfo: true
 
       - name: Cache Julia packages
         uses: julia-actions/cache@v2
-        with:
-          cache-name: julia-pkgs-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.version }}
-          cache-registries: "true"
-          cache-artifacts: "true"
-          cache-packages: "true"
 
       - name: Build package
         uses: julia-actions/julia-buildpkg@v1
 
       - name: Run tests
         uses: julia-actions/julia-runtest@v1
-        with:
-          coverage: ${{ matrix.os == 'ubuntu-latest' && matrix.version == '1' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Process coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
         uses: julia-actions/julia-processcoverage@v1
-        with:
-          directories: src
 
       - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
-          verbose: true
+          files: lcov.info
 
-      - name: Upload coverage to Coveralls
-        if: matrix.os == 'ubuntu-latest' && matrix.version == '1'
+      - name: Submit coverage to Coveralls
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: lcov.info
-          parallel: false
+          flag-name: test-${{ join(matrix.*, '-') }}
+          parallel: true
+
+  # ============================================================================
+  # Typst Backend Specific Tests
+  # ============================================================================
+
+  typst-backend:
+    name: "Typst Backend - ${{ matrix.platform }} - ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - typst     # Typst_jll
+          - native    # System typst
+          - none      # Source only
+        os:
+          - ubuntu-latest
+          - windows-latest
+        exclude:
+          # Native typst not available on Windows in CI
+          - os: windows-latest
+            platform: native
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install system Typst (native platform)
+        if: matrix.platform == 'native'
+        run: |
+          curl -fsSL https://github.com/typst/typst/releases/download/v0.12.0/typst-x86_64-unknown-linux-musl.tar.xz | tar -xJ
+          sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
+          typst --version
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+
+      - name: Cache Julia packages
+        uses: julia-actions/cache@v2
+
+      - name: Install package
+        run: |
+          julia --project=test/typst_backend -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+
+      - name: Run Typst backend tests
+        run: julia --project=test/typst_backend --code-coverage test/typst_backend/runtests.jl
+        env:
+          TYPST_PLATFORM: ${{ matrix.platform }}
+
+      - name: Process coverage
+        uses: julia-actions/julia-processcoverage@v1
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+          flags: typst-backend
+
+      - name: Submit coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: lcov.info
+          flag-name: typst-${{ matrix.platform }}-${{ matrix.os }}
+          parallel: true
+
+      - name: Upload Typst artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: typst-${{ matrix.platform }}-${{ matrix.os }}
+          path: |
+            test/typst_backend/builds/**/*.typ
+            test/typst_backend/builds/**/*.pdf
+          retention-days: 7
+
+  # ============================================================================
+  # Documentation
+  # ============================================================================
 
   docs:
     name: Build Documentation
@@ -124,124 +243,84 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
         with:
-          version: "1" # Use latest stable
+          version: '1'
 
-      - name: Cache Julia packages (docs)
+      - name: Cache Julia packages
         uses: julia-actions/cache@v2
-        with:
-          cache-name: julia-docs-pkgs
-          cache-registries: "true"
-
-      - name: Install documentation dependencies
-        run: |
-          julia --project=docs -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
 
       - name: Build and deploy documentation
         uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-          GKSwstype: "100" # For Plots.jl if used
+          GKSwstype: "100"
           JULIA_DEBUG: "Documenter"
+          DATADEPS_ALWAYS_ACCEPT: true
 
       - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: documentation-html
           path: docs/build/
           retention-days: 7
 
-  format-check:
-    name: Code Format Check (JuliaFormatter)
+  linkcheck:
+    name: "Linkcheck: Documentation"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
         with:
-          version: "1"
-
-      - name: Install JuliaFormatter
-        run: julia -e 'using Pkg; Pkg.add("JuliaFormatter")'
-
-      - name: Check code formatting
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - name: Install dependencies
         run: |
-          julia -e '
-            using JuliaFormatter
-            formatted = format(".", verbose=true, style=BlueStyle())
-            if formatted
-              @error "Code not formatted properly. Run: julia -e \"using JuliaFormatter; format(\\\".\\\")\" "
-              exit(1)
-            end
-          '
-
-  # Optional: Aqua.jl quality assurance
-  quality-assurance:
-    name: Quality Assurance (Aqua.jl)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
-        with:
-          version: "1"
-
-      - name: Install Aqua
-        run: |
-          julia --project -e '
+          julia --project=docs -e '
             using Pkg
-            Pkg.add("Aqua")
+            Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
+      - name: Build and check documentation
+        run: julia --color=yes --project=docs/ docs/make.jl linkcheck
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Aqua tests
-        run: |
-          julia --project -e '
-            using Aqua, DocumenterTypst
-            Aqua.test_all(DocumenterTypst; 
-              ambiguities=false,  # Documenter has some intentional ambiguities
-              deps_compat=true,
-              stale_deps=true,
-              unbound_args=true,
-              undefined_exports=true,
-            )'
+  # ============================================================================
+  # Finalization
+  # ============================================================================
 
-  # Generate release artifacts on tags
-  release:
-    name: Create Release Assets
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [test, docs]
+  close-coveralls:
+    name: "Close Coveralls Submission"
+    needs: [test, typst-backend]
+    if: ${{ always() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+
+  # ============================================================================
+  # Release (on tags)
+  # ============================================================================
+
+  release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [test, typst-backend, docs, linkcheck]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
-        with:
-          version: "1"
+        uses: actions/checkout@v6
 
       - name: Get version from tag
         id: get_version
@@ -278,46 +357,3 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Notify on failure
-  notify-failure:
-    name: Notify on Failure
-    needs: [test, docs]
-    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - name: Create issue on failure
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const title = `CI Failure on main: ${context.payload.head_commit.message.split('\n')[0]}`;
-            const body = `
-            CI failed on main branch.
-
-            **Commit**: ${context.sha}
-            **Author**: ${context.payload.head_commit.author.name}
-            **Message**: ${context.payload.head_commit.message}
-
-            **Workflow Run**: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
-
-            Please investigate and fix.
-            `;
-
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'CI-failure',
-            });
-
-            if (issues.data.length === 0) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: title,
-                body: body,
-                labels: ['CI-failure', 'bug'],
-              });
-            }
