@@ -53,10 +53,13 @@ test-snapshot-update:
 # Code Quality
 # ============================================================================
 
+lint-md:
+    markdownlint-cli2 --fix "**/*.md"
+
 # Format Julia code with Runic
 format:
     julia -e 'using Pkg; Pkg.add("Runic"); using Runic; Runic.main(["--verbose", "--inplace", "."])'
-    markdownlint-cli2 --fix "**/*.md"
+    @just lint-md
 
 # ============================================================================
 # Documentation

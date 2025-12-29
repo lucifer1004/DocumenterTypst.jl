@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Report a bug to help us improve
-title: '[BUG] '
+title: "[BUG] "
 labels: bug
 ---
 
@@ -12,6 +12,7 @@ labels: bug
 ## To Reproduce
 
 Steps to reproduce the behavior:
+
 1.
 2.
 3.
