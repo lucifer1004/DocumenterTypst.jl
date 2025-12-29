@@ -289,18 +289,48 @@ just changelog      # Generate changelog from CHANGELOG.md
 just clean          # Remove build artifacts
 ```
 
-### Making Changes
+### Making Changes (Jujutsu Workflow)
 
 **This project uses Jujutsu (jj) for version control** (`.jj` directory present).
 
-1. Create a new change: `jj new -m "Add feature"`
-2. Make changes, add tests
-3. Run `just format` and `just test`
-4. Add changelog entry to `CHANGELOG.md` under "Unreleased"
-5. Describe your changes: `jj describe`
-6. Create PR: Use `jj git push` or GitHub CLI
+#### Standard PR Workflow
 
-**Git interop**: The repository also has `.git`, so standard Git commands work if preferred.
+```bash
+# 1. Create feature
+jj new trunk() -m "feat: add X"
+jj bookmark create my-feature
+# Make changes, add tests
+just format && just test
+# Add entry to CHANGELOG.md under "Unreleased"
+jj git push --bookmark my-feature
+
+# 2. Address review (repeat as needed)
+jj new                          # Create new change on top
+# Make changes
+jj squash                       # Merge into parent (keep single commit)
+jj git push --bookmark my-feature --force
+
+# 3. After PR merged
+jj git fetch
+jj cleanup                      # Remove orphaned changes
+jj bookmark delete my-feature
+```
+
+#### Key Commands
+
+- `jj l` / `jj lg` / `jj la` - View log (20/50/all commits)
+- `jj st` - Status
+- `jj d` - Diff
+- `jj ba` - List all bookmarks
+- `jj p --bookmark X` - Safe push (explicit bookmark required)
+- `jj cleanup` - Remove orphaned changes (excludes bookmarks and current position)
+
+#### Important Notes
+
+- **Default to single-commit PRs**: Use `jj squash` to keep PR history clean
+- **Never use `jj git push --all`**: Always specify `--bookmark <name>`
+- **Squash and merge on GitHub**: Works perfectly with single-commit PR workflow
+- **Git interop available**: Standard Git commands work if needed
 
 ---
 

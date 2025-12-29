@@ -1,0 +1,21 @@
+# Pre-commit hooks for DocumenterTypst.jl
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  # Markdown linting (auto-installs markdownlint-cli2 via npm)
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.20.0
+    hooks:
+      - id: markdownlint-cli2
+        args: ["--fix"]
+
+  # Julia formatting (requires Julia + Runic to be installed)
+  # Note: pre-commit doesn't support Julia natively, so this uses system
+  - repo: local
+    hooks:
+      - id: julia-format
+        name: Julia formatting (Runic)
+        entry: bash -c 'julia -e "using Pkg; Pkg.add(\"Runic\"); using Runic; Runic.main([\"--check\", \".\"])"'
+        language: system
+        files: \.jl$
+        pass_filenames: false

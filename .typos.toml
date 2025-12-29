@@ -10,3 +10,4 @@ doctest = "doctest"
 ket = "ket"
 braket = "braket"
 typs = "typs"  # .typ files (plural form)
+ba = "ba" # `jj ba` alias for `jj bookmark list --all`
