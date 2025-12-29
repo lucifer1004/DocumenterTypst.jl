@@ -8,11 +8,23 @@
 # 3. Storing hashes as snapshots
 # 4. Generating diff images on failure
 #
+# Key Features:
+# - Uses --ignore-system-fonts for reproducible cross-platform rendering
+# - Auto-detects page count from compiled output
+# - Saves both hash files (.hash) and reference PNGs (optional)
+#
 # Usage:
-#   test_visual("test_name", typst_code; update=false)
+#   test_visual("test_name", typst_code)
+#   test_visual_from_file("test_name", "path/to/file.typ")
 #
 # Update snapshots:
-#   UPDATE_SNAPSHOTS=1 julia test/runtests.jl
+#   UPDATE_SNAPSHOTS=1 julia test/run_snapshot_tests.jl
+#
+# Cross-platform Consistency:
+#   Visual snapshots use --ignore-system-fonts to ensure font rendering
+#   is consistent across different operating systems. This uses only the
+#   fonts embedded in Typst packages (Libertinus Serif, DejaVu Sans Mono).
+
 
 using SHA
 using Typst_jll: typst as typst_exe
@@ -62,7 +74,10 @@ function test_visual(name::String, typst_code::String; update::Bool = false, pag
         mkpath(png_dir)
 
         try
-            # Compile with Typst (generates test-{page}.png for each page)
+            # Compile with Typst to PNG images
+            # --ignore-system-fonts: Use only embedded fonts for cross-platform consistency
+            # --format png: Generate PNG output instead of PDF
+            # "$png_dir/test-{p}.png": Output pattern ({p} = page number, 1-indexed)
             run(
                 pipeline(
                     `$(typst_exe()) compile $test_file --ignore-system-fonts --format png "$png_dir/test-{p}.png"`,
@@ -77,10 +92,11 @@ function test_visual(name::String, typst_code::String; update::Bool = false, pag
         end
 
         # Auto-detect pages if not specified
+        # Typst generates files like: output-1.png, output-2.png, output-3.png, ...
         if isnothing(pages)
             png_files = filter(f -> occursin(r"^test-\d+\.png$", f), readdir(png_dir))
             pages = sort([parse(Int, match(r"test-(\d+)\.png", f)[1]) for f in png_files])
-
+            
             if isempty(pages)
                 @error "No PNG files generated" test_name = name png_dir = png_dir
                 @test false
@@ -213,7 +229,10 @@ function test_visual_from_file(name::String, typ_file::String; update::Bool = fa
         mkpath(png_dir)
 
         try
-            # Compile with Typst (generates output-{page}.png for each page)
+            # Compile with Typst to PNG images
+            # --ignore-system-fonts: Use only embedded fonts for cross-platform consistency
+            # --format png: Generate PNG output instead of PDF
+            # "$png_dir/output-{p}.png": Output pattern ({p} = page number, 1-indexed)
             run(
                 pipeline(
                     `$(typst_exe()) compile $typ_file --ignore-system-fonts --format png "$png_dir/output-{p}.png"`,
@@ -228,10 +247,11 @@ function test_visual_from_file(name::String, typ_file::String; update::Bool = fa
         end
 
         # Auto-detect pages if not specified
+        # Typst generates files like: output-1.png, output-2.png, output-3.png, ...
         if isnothing(pages)
             png_files = filter(f -> occursin(r"^output-\d+\.png$", f), readdir(png_dir))
             pages = sort([parse(Int, match(r"output-(\d+)\.png", f)[1]) for f in png_files])
-
+            
             if isempty(pages)
                 @error "No PNG files generated" test_name = name png_dir = png_dir
                 @test false

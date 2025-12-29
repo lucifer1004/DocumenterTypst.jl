@@ -11,6 +11,11 @@ Visual snapshots test the **rendered appearance** of PDF pages by:
 3. Comparing against saved hashes
 4. Flagging any visual changes
 
+**Cross-platform Consistency**: Visual snapshots use `--ignore-system-fonts` flag to ensure
+font rendering is consistent across different operating systems. This uses only the fonts
+embedded in Typst packages (Libertinus Serif for text, DejaVu Sans Mono for code), avoiding
+platform-specific font variations that would cause false positives.
+
 ## Two Testing Approaches
 
 ### 1. Integration Fixture Testing (Recommended)
@@ -257,13 +262,15 @@ Typical test run:
 which typst
 
 # Or skip visual tests
-TYPST_PLATFORM=none julia test/runtests.jl
+SKIP_VISUAL_SNAPSHOTS=1 julia test/run_snapshot_tests.jl
 ```
 
 ### Hash mismatch after no changes
 
-- Font rendering might differ across systems
+This should rarely happen now due to `--ignore-system-fonts`, but can still occur if:
+
 - Typst version differences
+- Embedded font updates in Typst packages
 - Solution: Regenerate snapshots on target platform
 
 ### PNG not generated
@@ -273,8 +280,17 @@ TYPST_PLATFORM=none julia test/runtests.jl
 - Try manual compilation:
 
   ```bash
-  typst compile test.typ --format png --ppi 150 output.png
+  typst compile test.typ --ignore-system-fonts --format png "output-{p}.png"
   ```
+
+### Font rendering differs across platforms
+
+Visual tests use `--ignore-system-fonts` to avoid this issue. This flag:
+
+- Disables system font lookup
+- Uses only fonts from Typst packages (Libertinus Serif, DejaVu Sans Mono)
+- Ensures consistent rendering on Linux, macOS, and Windows
+- Matches the default fonts in `assets/documenter.typ`
 
 ## Best Practices
 
@@ -289,9 +305,13 @@ TYPST_PLATFORM=none julia test/runtests.jl
 
 - **Hash algorithm**: SHA256 (crypto-grade, zero collision risk)
 - **PNG resolution**: 150 PPI (good quality, reasonable file size)
-- **Page selection**: Configurable per test
-- **Typst flags**: `--format png --ppi 150`
-- **Dependencies**: None (uses Julia stdlib `SHA`)
+- **Page selection**: Configurable per test (auto-detect by default)
+- **Typst flags**: `--ignore-system-fonts --format png "$output-{p}.png"`
+  - `--ignore-system-fonts`: Ensures cross-platform consistency
+  - `--format png`: Generates PNG output
+  - `{p}`: Page number placeholder (1-indexed, generates `output-1.png`, `output-2.png`, etc.)
+- **Dependencies**: SHA (Julia stdlib), Typst_jll (for compiler)
+- **Default fonts**: Libertinus Serif (text), DejaVu Sans Mono (code) - embedded in Typst packages
 
 ## Examples
 

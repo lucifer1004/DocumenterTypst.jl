@@ -175,4 +175,28 @@ With **multiple** elements.
 """)
 ```
 
+**Visual snapshot test:**
+
+```julia
+# Auto-detect all pages (recommended)
+test_visual("feature_name", """
+#import "documenter.typ": *
+#show: documenter.with(title: "Test", config: (...))
+= Content
+""")
+
+# Or specify specific pages
+test_visual("feature_name", """..."""; pages=[2, 3])
+
+# For integration fixtures
+test_visual_from_file("fixture_name", "path/to/build/output.typ")
+```
+
+**Note on visual tests:**
+
+- Uses `--ignore-system-fonts` for cross-platform consistency
+- Tests actual rendered appearance (headers, footers, layout)
+- Auto-detects page count from compiled output
+- Default fonts: Libertinus Serif (text), DejaVu Sans Mono (code)
+
 See `runtests.jl` for complete examples.

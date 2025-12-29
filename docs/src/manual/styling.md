@@ -69,6 +69,10 @@ This file is automatically loaded if it exists.
   heading-size-subsubsection: 12pt,
 
   // Font families
+  // Default fonts (embedded in Typst packages for cross-platform consistency):
+  // - Libertinus Serif (text)
+  // - DejaVu Sans Mono (code)
+  // You can override with system fonts or custom fonts:
   text-font: ("Inter", "DejaVu Sans"),
   code-font: ("JetBrains Mono", "DejaVu Sans Mono"),
 )
@@ -842,9 +846,24 @@ julia docs/make.jl
 
 ## Font Installation
 
+### Default Fonts
+
+DocumenterTypst uses **Libertinus Serif** (text) and **DejaVu Sans Mono** (code) by default.
+These fonts are embedded in Typst packages and work consistently across all platforms without
+requiring any installation.
+
 ### Using System Fonts
 
-Typst automatically finds system fonts. No configuration needed for:
+To use system fonts, override the defaults in your `custom.typ`:
+
+```typst
+#let config = (
+  text-font: ("Inter", "DejaVu Sans"),
+  code-font: ("JetBrains Mono", "DejaVu Sans Mono"),
+)
+```
+
+Typst automatically finds system fonts:
 
 - **macOS**: All installed fonts
 - **Linux**: Fonts in `~/.fonts` and `/usr/share/fonts`
@@ -861,7 +880,11 @@ format = DocumenterTypst.Typst(
 
 ### Embedding Fonts
 
-For reproducible builds, use `Typst_jll` which includes basic fonts, or use Docker.
+For reproducible builds across platforms:
+
+1. **Use default fonts** (Libertinus Serif, DejaVu Sans Mono) - already embedded
+2. **Use Typst_jll** (default) - includes basic fonts
+3. **Use Docker** - control the entire environment
 
 ## Troubleshooting
 
@@ -872,8 +895,9 @@ For reproducible builds, use `Typst_jll` which includes basic fonts, or use Dock
 **Solutions**:
 
 1. Check font is installed: `typst fonts` (native) or check system fonts
-2. Use fallback: `text-font: ("PreferredFont", "Fallback", "DejaVu Sans")`
+2. Use fallback fonts: `text-font: ("PreferredFont", "Fallback", "DejaVu Sans")`
 3. Specify font path: `typst --font-path /custom/path`
+4. Use default fonts (no installation needed): `text-font: ("Libertinus Serif")`
 
 ### Colors Not Applying
 

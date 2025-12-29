@@ -82,6 +82,7 @@
   admonition-title-size: 12pt,
   metadata-size: 12pt,
   // Fonts
+  // Default fonts are embedded in Typst packages for cross-platform consistency
   text-font: ("Libertinus Serif"),
   code-font: ("DejaVu Sans Mono"),
   // Spacing and layout
