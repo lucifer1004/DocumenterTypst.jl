@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://lucifer1004.github.io/DocumenterTypst.jl/stable/
+    about: Check the documentation for usage guides and troubleshooting
+  - name: Discussions
+    url: https://github.com/lucifer1004/DocumenterTypst.jl/discussions
+    about: Ask questions or discuss ideas in GitHub Discussions

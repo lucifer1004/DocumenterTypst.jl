@@ -24,6 +24,45 @@ concurrency:
 
 jobs:
   # ============================================================================
+  # Change Detection (Path Filtering)
+  # ============================================================================
+
+  detect-changes:
+    name: Detect Changed Files
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+      tests: ${{ steps.filter.outputs.tests }}
+      docs: ${{ steps.filter.outputs.docs }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'assets/**'
+              - 'Project.toml'
+            tests:
+              - 'test/**'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+            workflows:
+              - '.github/workflows/**'
+            docs_only:
+              - 'docs/**/*.md'
+              - 'docs/src/assets/**'
+              - 'README.md'
+              - '.github/**/*.md'
+              - 'LICENSE'
+
+  # ============================================================================
   # Code Quality Checks
   # ============================================================================
 
@@ -81,6 +120,12 @@ jobs:
 
   unit-tests:
     name: Unit Tests - Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.tests == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      github.event_name == 'push'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
@@ -138,6 +183,12 @@ jobs:
 
   integration-tests:
     name: "Integration - ${{ matrix.platform }} - ${{ matrix.os }}"
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.tests == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      github.event_name == 'push'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -193,6 +244,12 @@ jobs:
 
   snapshot-tests:
     name: "Snapshot Tests (Text + Visual)"
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.tests == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -244,6 +301,12 @@ jobs:
 
   docs:
     name: Build Documentation
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -281,6 +344,12 @@ jobs:
 
   linkcheck:
     name: "Linkcheck: Documentation"
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
