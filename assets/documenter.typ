@@ -82,8 +82,8 @@
   admonition-title-size: 12pt,
   metadata-size: 12pt,
   // Fonts
-  text-font: ("Inter", "DejaVu Sans"),
-  code-font: ("JetBrains Mono", "DejaVu Sans Mono"),
+  text-font: ("Libertinus Serif"),
+  code-font: ("DejaVu Sans Mono"),
   // Spacing and layout
   outline-number-spacing: 0.5em,
   outline-indent-step: 1em,

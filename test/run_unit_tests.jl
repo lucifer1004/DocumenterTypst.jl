@@ -18,6 +18,23 @@ using DocumenterTypst.TypstWriter:
 include("test_helpers.jl")
 
 # ============================================================================
+# Helper: Suppress expected warnings/errors in tests
+# ============================================================================
+
+"""
+    suppress_expected_logs(f; level=Logging.Error)
+
+Run function `f` with log level set to `level` (default: Error).
+This suppresses Info and Warning logs, useful for tests that intentionally
+trigger expected warnings (e.g., missing docstrings with warnonly=true).
+"""
+function suppress_expected_logs(f; level = Logging.Error)
+    return with_logger(ConsoleLogger(stderr, level)) do
+        f()
+    end
+end
+
+# ============================================================================
 # UNIT TESTS (PART 1 + PART 2 from original runtests.jl)
 # ============================================================================
 
@@ -208,11 +225,30 @@ include("test_helpers.jl")
         end
 
         @testset "Images" begin
-            output = render_to_typst("![Alt text](image.png)")
-            @test contains(output, "#figure")
-            @test contains(output, "image(")
-            @test contains(output, "image.png")
-            @test contains(output, "Alt text")
+            # Create temp file to avoid Documenter file existence check
+            mktempdir() do dir
+                src_dir = joinpath(dir, "src")
+                mkpath(src_dir)
+                write(joinpath(src_dir, "index.md"), "![Alt text](image.png)")
+                touch(joinpath(src_dir, "image.png"))  # Create empty image file (same dir as index.md)
+
+                makedocs(;
+                    root = dir,
+                    source = "src",
+                    build = "build",
+                    format = DocumenterTypst.Typst(platform = "none"),
+                    sitename = "Test",
+                    pages = ["index.md"],
+                    warnonly = true,
+                    remotes = nothing,
+                )
+
+                output = read(joinpath(dir, "build", "Test.typ"), String)
+                @test contains(output, "#figure")
+                @test contains(output, "image(")
+                @test contains(output, "image.png")
+                @test contains(output, "Alt text")
+            end
         end
 
         @testset "Block Quotes" begin
@@ -255,16 +291,20 @@ include("test_helpers.jl")
                         """
                     )
 
-                    makedocs(;
-                        root = dir,
-                        source = "src",
-                        build = "build",
-                        sitename = "DocsTest",
-                        format = DocumenterTypst.Typst(; platform = "none"),
-                        pages = ["index.md"],
-                        doctest = false,
-                        remotes = nothing,
-                    )
+                    # Suppress expected warnings (missing docstrings for Base functions)
+                    suppress_expected_logs() do
+                        makedocs(;
+                            root = dir,
+                            source = "src",
+                            build = "build",
+                            sitename = "DocsTest",
+                            format = DocumenterTypst.Typst(; platform = "none"),
+                            pages = ["index.md"],
+                            doctest = false,
+                            remotes = nothing,
+                            warnonly = true,  # Allow missing docstrings
+                        )
+                    end
 
                     typfile = joinpath(dir, "build", "DocsTest.typ")
                     @test isfile(typfile)
@@ -332,7 +372,7 @@ include("test_helpers.jl")
                     typfile = joinpath(dir, "build", "ContentsTest.typ")
                     @test isfile(typfile)
                     content = read(typfile, String)
-                    @test contains(content, "#outline")
+                    @test contains(content, "- #link(label(\"index.md#Contents-Test\"))[Contents Test]")
                 end
             end
 
@@ -442,57 +482,65 @@ include("test_helpers.jl")
 
             @testset "Empty Elements" begin
                 @test strip(render_to_typst("")) == ""
-                @test contains(render_to_typst("**"))  # Empty bold
-                @test contains(render_to_typst("[]()"), "#link")  # Empty link
+                # Empty bold renders as literal **
+                @test contains(render_to_typst("**"), "\\*\\*")
+                # Empty link renders empty
+                @test contains(render_to_typst("[]()"), "#link")
             end
         end
 
         @testset "Error Detection" begin
             @testset "Missing Images" begin
-                @test_throws ErrorException mktempdir() do dir
-                    srcdir = joinpath(dir, "src")
-                    mkpath(srcdir)
+                # Suppress expected error logs
+                @test_throws ErrorException suppress_expected_logs() do
+                    mktempdir() do dir
+                        srcdir = joinpath(dir, "src")
+                        mkpath(srcdir)
 
-                    write(
-                        joinpath(srcdir, "index.md"), """
-                        ![Caption](nonexistent.png)
-                        """
-                    )
+                        write(
+                            joinpath(srcdir, "index.md"), """
+                            ![Caption](nonexistent.png)
+                            """
+                        )
 
-                    makedocs(;
-                        root = dir,
-                        source = "src",
-                        build = "build",
-                        sitename = "Test",
-                        format = DocumenterTypst.Typst(; platform = "none"),
-                        pages = ["index.md"],
-                        doctest = false,
-                        remotes = nothing,
-                    )
+                        makedocs(;
+                            root = dir,
+                            source = "src",
+                            build = "build",
+                            sitename = "Test",
+                            format = DocumenterTypst.Typst(; platform = "none"),
+                            pages = ["index.md"],
+                            doctest = false,
+                            remotes = nothing,
+                        )
+                    end
                 end
             end
 
             @testset "Undefined Footnote" begin
-                @test_throws ErrorException mktempdir() do dir
-                    srcdir = joinpath(dir, "src")
-                    mkpath(srcdir)
+                # Suppress expected error logs
+                @test_throws ErrorException suppress_expected_logs() do
+                    mktempdir() do dir
+                        srcdir = joinpath(dir, "src")
+                        mkpath(srcdir)
 
-                    write(
-                        joinpath(srcdir, "index.md"), """
-                        Text with undefined footnote[^undefined].
-                        """
-                    )
+                        write(
+                            joinpath(srcdir, "index.md"), """
+                            Text with undefined footnote[^undefined].
+                            """
+                        )
 
-                    makedocs(;
-                        root = dir,
-                        source = "src",
-                        build = "build",
-                        sitename = "Test",
-                        format = DocumenterTypst.Typst(; platform = "none"),
-                        pages = ["index.md"],
-                        doctest = false,
-                        remotes = nothing,
-                    )
+                        makedocs(;
+                            root = dir,
+                            source = "src",
+                            build = "build",
+                            sitename = "Test",
+                            format = DocumenterTypst.Typst(; platform = "none"),
+                            pages = ["index.md"],
+                            doctest = false,
+                            remotes = nothing,
+                        )
+                    end
                 end
             end
         end
@@ -509,17 +557,20 @@ include("test_helpers.jl")
                         """
                     )
 
-                    makedocs(;
-                        root = dir,
-                        source = "src",
-                        build = "build",
-                        sitename = "Test",
-                        format = DocumenterTypst.Typst(; platform = "none"),
-                        pages = ["index.md"],
-                        doctest = false,
-                        remotes = nothing,
-                        warnonly = true,
-                    )
+                    # Suppress expected warnings (missing image with warnonly)
+                    suppress_expected_logs() do
+                        makedocs(;
+                            root = dir,
+                            source = "src",
+                            build = "build",
+                            sitename = "Test",
+                            format = DocumenterTypst.Typst(; platform = "none"),
+                            pages = ["index.md"],
+                            doctest = false,
+                            remotes = nothing,
+                            warnonly = true,
+                        )
+                    end
 
                     typfile = joinpath(dir, "build", "Test.typ")
                     @test isfile(typfile)
@@ -537,17 +588,20 @@ include("test_helpers.jl")
                         """
                     )
 
-                    makedocs(;
-                        root = dir,
-                        source = "src",
-                        build = "build",
-                        sitename = "Test",
-                        format = DocumenterTypst.Typst(; platform = "none"),
-                        pages = ["index.md"],
-                        doctest = false,
-                        remotes = nothing,
-                        warnonly = true,
-                    )
+                    # Suppress expected warnings (undefined footnote with warnonly)
+                    suppress_expected_logs() do
+                        makedocs(;
+                            root = dir,
+                            source = "src",
+                            build = "build",
+                            sitename = "Test",
+                            format = DocumenterTypst.Typst(; platform = "none"),
+                            pages = ["index.md"],
+                            doctest = false,
+                            remotes = nothing,
+                            warnonly = true,
+                        )
+                    end
 
                     typfile = joinpath(dir, "build", "Test.typ")
                     @test isfile(typfile)
@@ -586,16 +640,20 @@ include("test_helpers.jl")
                         """
                     )
 
-                    makedocs(;
-                        root = dir,
-                        source = "src",
-                        build = "build",
-                        sitename = "Test",
-                        format = DocumenterTypst.Typst(; platform = "none"),
-                        pages = ["api.md"],
-                        doctest = false,
-                        remotes = nothing,
-                    )
+                    # Suppress expected warnings (missing docstrings for Base functions)
+                    suppress_expected_logs() do
+                        makedocs(;
+                            root = dir,
+                            source = "src",
+                            build = "build",
+                            sitename = "Test",
+                            format = DocumenterTypst.Typst(; platform = "none"),
+                            pages = ["api.md"],
+                            doctest = false,
+                            remotes = nothing,
+                            warnonly = true,  # Allow missing docstrings
+                        )
+                    end
 
                     typfile = joinpath(dir, "build", "Test.typ")
                     @test isfile(typfile)
