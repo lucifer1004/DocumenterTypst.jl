@@ -66,18 +66,6 @@ jobs:
   # Code Quality Checks
   # ============================================================================
 
-  changelog:
-    name: Changelog Check
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    steps:
-      - uses: dangoslen/changelog-enforcer@v3
-        with:
-          changeLogPath: "CHANGELOG.md"
-          skipLabels: "Skip Changelog,dependencies"
-
   runic:
     name: "Runic (Julia code formatting)"
     runs-on: ubuntu-latest
