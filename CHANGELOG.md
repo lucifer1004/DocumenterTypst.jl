@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - linkcheck job only needs read permissions and shouldn't attempt deployment
 - PDF file size bloat from uncompressed streams (100 MB → 15 MB for large documents after optimization) [#8]
 - PDF size bloat from Type 3 emoji fonts (can be disabled via `use_system_fonts=false`) [#8]
+- Compilation speed regression and outline number error caused by `colbreak` [#9]
 
 ## v0.0.x
 
@@ -101,3 +102,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#5]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/5
 [#8]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/8
+[#9]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/9
