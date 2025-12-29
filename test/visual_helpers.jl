@@ -11,7 +11,7 @@
 # Key Features:
 # - Uses --ignore-system-fonts for reproducible cross-platform rendering
 # - Auto-detects page count from compiled output
-# - Saves both hash files (.hash) and reference PNGs (optional)
+# - Saves both hash files (.hash) and reference pictures (.png) (optional)
 #
 # Usage:
 #   test_visual("test_name", typst_code)
@@ -96,7 +96,7 @@ function test_visual(name::String, typst_code::String; update::Bool = false, pag
         if isnothing(pages)
             png_files = filter(f -> occursin(r"^test-\d+\.png$", f), readdir(png_dir))
             pages = sort([parse(Int, match(r"test-(\d+)\.png", f)[1]) for f in png_files])
-            
+
             if isempty(pages)
                 @error "No PNG files generated" test_name = name png_dir = png_dir
                 @test false
@@ -251,7 +251,7 @@ function test_visual_from_file(name::String, typ_file::String; update::Bool = fa
         if isnothing(pages)
             png_files = filter(f -> occursin(r"^output-\d+\.png$", f), readdir(png_dir))
             pages = sort([parse(Int, match(r"output-(\d+)\.png", f)[1]) for f in png_files])
-            
+
             if isempty(pages)
                 @error "No PNG files generated" test_name = name png_dir = png_dir
                 @test false

@@ -76,7 +76,7 @@ test/snapshots/visual/
 ├── references/                  # Reference PNG images (committed for docs)
 │   ├── header_chapter_page2.png
 │   └── ...
-└── failures/                    # Failed test PNGs (git-ignored, auto-cleaned)
+└── failures/                    # Failed test PNG pictures (git-ignored, auto-cleaned)
     ├── test_name_page1_actual.png
     └── ...
 ```
@@ -90,14 +90,14 @@ test/snapshots/visual/
 - **Must be committed** to git
 - Used for automated comparison
 
-### `references/` PNGs (Optional)
+### `references/` PNG pictures (Optional)
 
 - Human-readable reference images
 - Generated when updating snapshots
 - **Can be committed** for documentation
 - Help reviewers see what changed
 
-### `failures/` PNGs (Temporary)
+### `failures/` PNG pictures (Temporary)
 
 - Generated when tests fail
 - Show actual output for debugging
@@ -138,7 +138,7 @@ This will:
 1. Generate new PNG images
 2. Compute new hashes
 3. Save hashes to `.hash` files
-4. Save reference PNGs to `references/`
+4. Save reference PNG pictures to `references/`
 
 ### Debugging Failures
 
@@ -245,7 +245,7 @@ Visual snapshots should **only** be updated:
 
 - **Hash comparison**: Fast (~1ms per page)
 - **PNG generation**: Moderate (~100-500ms per page)
-- **Update mode**: Slower (generates + saves PNGs)
+- **Update mode**: Slower (generates + saves PNG pictures)
 - **Verify mode**: Fast (only compares hashes)
 
 Typical test run:
@@ -297,7 +297,7 @@ Visual tests use `--ignore-system-fonts` to avoid this issue. This flag:
 1. **Test specific features** - One visual test per layout concern
 2. **Use minimal content** - Just enough to show the feature
 3. **Test critical pages** - Usually page 2-3 (after title/TOC)
-4. **Commit reference PNGs** - Helps code review
+4. **Commit reference PNG pictures** - Helps code review
 5. **Clean failures** - Auto-cleaned, but can manually `rm -rf test/snapshots/visual/failures/`
 6. **Review changes carefully** - Visual regressions are subtle
 
