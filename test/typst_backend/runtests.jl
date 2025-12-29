@@ -251,7 +251,6 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
 
                 # Run makedocs
                 cd(test_dir) do
-                    ENV["TYPST_PLATFORM"] = PLATFORM
                     include(joinpath(test_dir, "make.jl"))
                 end
 

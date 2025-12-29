@@ -233,10 +233,14 @@ walk_navpages_typst(src::String, parent, doc) = walk_navpages_typst(true, nothin
 # Documenter integration hooks
 # ============================================================================
 
-# Hook into SetupBuildDirectory to handle .typ files
-# We need to override this to add .typ files to doc.blueprint.pages
-# This is necessary because Documenter only adds .md files by default
+# Hook into SetupBuildDirectory to handle .typ files when building Typst format
+# We need to override this to add .typ files to doc.blueprint.pages for Typst builds
+# For non-Typst formats, we use Documenter's default behavior (only .md files)
 function _setup_build_directory_impl(doc::Documenter.Document)
+    # Check if the current format is Typst
+    # doc.user.format is a Vector{Documenter.Writer}, check if any element is Typst
+    is_typst_format = any(fmt -> fmt isa Typst, doc.user.format)
+
     @info "SetupBuildDirectory: setting up build directory."
 
     # Frequently used fields.
@@ -272,15 +276,20 @@ function _setup_build_directory_impl(doc::Documenter.Document)
                 wd = normpath(joinpath(doc.user.root, workdir))
             end
 
-            # MODIFICATION: Handle both .md and .typ files
+            # Handle both .md files and .typ files (for Typst format only)
             if endswith(file, ".md")
                 push!(mdpages, Documenter.srcpath(source, root, file))
                 Documenter.addpage!(doc, src, dst, wd)
-            elseif endswith(file, ".typ")
-                # Add .typ files to blueprint.pages so they can be referenced in pages
+            elseif is_typst_format && endswith(file, ".typ")
+                # Only add .typ files to blueprint.pages when building Typst format
                 Documenter.addpage!(doc, src, dst, wd)
                 cp(src, dst; force = true)
+            elseif !is_typst_format && endswith(file, ".typ")
+                # Skip .typ files for non-Typst formats (don't copy them as assets)
+                # This prevents pollution of HTML/other format builds
+                continue
             else
+                # Copy all other files (images, data files, etc.) as assets
                 cp(src, dst; force = true)
             end
         end

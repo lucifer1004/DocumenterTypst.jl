@@ -98,7 +98,9 @@ Compile the .typ file using the given compiler backend.
 Returns true on success, throws on failure.
 """
 function compile(c::NativeCompiler, fileprefix::String, settings::Typst)
-    Sys.which("typst") === nothing && error("typst command not found")
+    # Validate that the actual typst command exists
+    typst_exe = first(c.typst_cmd.exec)
+    Sys.which(typst_exe) === nothing && error("typst command not found: $typst_exe")
     @info "TypstWriter: compiling Typst to PDF (native)..."
 
     # Build compile command with optional flags

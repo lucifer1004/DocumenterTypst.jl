@@ -10,6 +10,8 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
+        # Test heading offset calculation: same .typ file included twice
+        # to verify correct offset at different depths/title configurations
         "simple.typ",  # depth=1, no title => offset=0
         "Simple Typst" => "simple.typ",  # depth=1, with title => offset=1
         "Advanced" => [
