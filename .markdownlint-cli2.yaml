@@ -1,0 +1,23 @@
+# markdownlint-cli2 configuration
+# This extends the .markdownlint.json config and adds CLI-specific options
+# See: https://github.com/DavidAnson/markdownlint-cli2
+
+# Configuration file to use (markdownlint rules)
+config: .markdownlint.json
+
+# Globs to ignore (in addition to .markdownlintignore)
+ignores:
+  - "node_modules"
+  - "docs/build"
+  - "docs/build-typst"
+  - "test/**/build"
+  - "test/**/builds"
+  - "test/**/build-debug"
+
+# Fix mode (only used when --fix is passed)
+fix: false
+
+# Output formatting
+# Options: "default", "json", "jsonl", "jslint", "junit"
+outputFormatters:
+  - [ "markdownlint-cli2-formatter-default" ]

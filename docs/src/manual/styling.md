@@ -160,7 +160,7 @@ Control how code blocks are rendered:
 ```
 
 !!! warning "Important"
-When using `codeblock-engine: "codly"`, **do not** manually call `show: codly-init.with()` or `codly(...)` in your `custom.typ` file. All codly configuration should be done through the `codly-options` dictionary to avoid conflicts.
+    When using `codeblock-engine: "codly"`, **do not** manually call `show: codly-init.with()` or `codly(...)` in your `custom.typ` file. All codly configuration should be done through the `codly-options` dictionary to avoid conflicts.
 
 **Using builtin Typst rendering:**
 

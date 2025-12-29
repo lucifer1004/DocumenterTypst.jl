@@ -26,6 +26,7 @@ This project follows the [Julia Community Standards](https://julialang.org/commu
    ```
 
 3. **Run tests**:
+
    ```julia
    Pkg.test()
    ```
@@ -47,13 +48,17 @@ This project follows the [Julia Community Standards](https://julialang.org/commu
    ```
 
 3. Push to your fork and create a pull request:
+
    ```bash
    git push origin your-feature-branch
    ```
 
 ### Code Style
 
-We use [Runic.jl](https://github.com/fredrikekre/Runic.jl) for Julia code formatting.
+We use:
+
+- [Runic.jl](https://github.com/fredrikekre/Runic.jl) for Julia code formatting
+- [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) for Markdown linting
 
 **Format your code before committing**:
 
@@ -64,13 +69,18 @@ using Runic
 Runic.main(["--verbose", "."])
 ```
 
-Or use the justfile:
+Or use the justfile (formats both Julia and Markdown):
 
 ```bash
 just format
 ```
 
-CI will check formatting automatically using Runic v1.2.
+This command will:
+
+1. Format Julia code with Runic
+2. Lint and auto-fix Markdown files with markdownlint-cli2
+
+CI will check formatting automatically using Runic v1.2 and markdownlint-cli2.
 
 ## Testing
 
@@ -98,7 +108,7 @@ just test-backend native    # System typst
 just test-backend none      # Only .typ generation (fastest)
 
 # Manual run
-TYPST_PLATFORM=typst julia --project=test/typst_backend test/typst_backend/runtests.jl
+TYPST_PLATFORM=typst julia --project=test/integration test/integration/runtests.jl
 ```
 
 Available platforms:

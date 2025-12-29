@@ -8,7 +8,7 @@
 
 1. **Never break backward compatibility**: Any change that breaks existing user documentation builds is a bug.
 2. **All user-visible changes require a changelog entry** in `CHANGELOG.md` under "Unreleased" section (unless marked "Skip Changelog").
-3. **Code style**: Follow Julia standard conventions. Use `just format` (Runic) before committing.
+3. **Code style**: Follow Julia standard conventions. Use `just format` (Runic for Julia, markdownlint-cli2 for Markdown) before committing.
 4. **Test coverage**: Add tests for all new Markdown node types or Typst output features.
 5. **Detect VCS correctly**: Always check for version control system before suggesting workflows (see "VCS Detection" below).
 
@@ -108,7 +108,8 @@ DocumenterTypst is a **Documenter plugin**, not a standalone tool. It:
 ### Tests
 
 - **`test/runtests.jl`**: Unit tests for all MarkdownAST node conversions
-- **`test/typst_backend/`**: Integration tests that compile full documentation projects
+- **`test/integration/`**: Integration tests that compile full documentation projects
+  - **`fixtures/`**: Test fixtures for different scenarios
 
 ### Documentation
 
@@ -160,6 +161,7 @@ Example: `Heading` → `#heading(level: 1, "Title Text")`
 
 1. **Locate the node type** in Documenter's MarkdownAST
 2. **Add a `convert()` method** in `src/TypstWriter.jl`:
+
    ```julia
    function convert(io::IO, node::Node{T}, doc::Documenter.Document) where {T <: NewNodeType}
        # Extract data from node.element
@@ -167,7 +169,9 @@ Example: `Heading` → `#heading(level: 1, "Title Text")`
        # Recursively convert children if needed
    end
    ```
+
 3. **Add tests** in `test/runtests.jl`:
+
    ```julia
    @testset "NewNodeType" begin
        # Test various edge cases
@@ -191,11 +195,13 @@ Example: `Heading` → `#heading(level: 1, "Title Text")`
 
 1. **Add platform option** in `Typst` struct validation
 2. **Implement compilation logic** in `compile_typst()` function:
+
    ```julia
    if platform == "new_backend"
        # Custom compilation logic
    end
    ```
+
 3. **Update documentation** in `docs/src/manual/configuration.md`
 
 ---
@@ -218,8 +224,8 @@ Example: `Heading` → `#heading(level: 1, "Title Text")`
 
 ```bash
 just test              # Unit tests
-just test-backend      # Integration tests (default: Typst_jll)
-just test-backend none # Fast test (no compilation)
+just test-integration  # Integration tests (default: Typst_jll)
+just test-integration none # Fast test (no compilation)
 ```
 
 ---
@@ -276,7 +282,7 @@ just dev  # Install dependencies
 
 ```bash
 just test           # Run unit tests
-just format         # Auto-format code with Runic
+just format         # Auto-format Julia code (Runic) and Markdown (markdownlint-cli2)
 just docs           # Build HTML documentation
 just docs-typst     # Build PDF documentation
 just changelog      # Generate changelog from CHANGELOG.md

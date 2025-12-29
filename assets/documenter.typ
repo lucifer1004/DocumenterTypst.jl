@@ -36,25 +36,6 @@
   final
 }
 
-// Container state management for heading pagebreaks
-#let in-container = state("in-container", false)
-
-#let safe-block(body, ..args) = context {
-  // Save the current state to handle nested containers correctly
-  let old-state = in-container.get()
-
-  // Set to true for this block
-  in-container.update(true)
-
-  // Render the block
-  let result = block(..args, body)
-
-  // Restore the previous state (important for nested containers!)
-  in-container.update(old-state)
-
-  result
-}
-
 // Default configuration dictionary
 #let default-config = (
   // Colors
@@ -182,7 +163,7 @@
   ]
 
   // Content area: breakable, zero spacing above
-  safe-block(
+  block(
     width: 100%,
     breakable: true,
     fill: bgcolor,
@@ -192,15 +173,6 @@
   )[
     #children
   ]
-}
-
-#let extended_heading(level: 0, outlined: true, body) = context {
-  // Add pagebreak for level 1 and 2 headings, unless they are within a container
-  if level <= 2 and not in-container.get() {
-    pagebreak(weak: true)
-  }
-
-  heading(level: level, outlined: outlined, body)
 }
 
 #let outline(title: "Contents", indent: true, depth: 3) = context {
@@ -282,24 +254,22 @@
     return
   }
 
-  // 1. Check if current page is a Part page (level 1 heading page)
-  let parts_on_page = query(heading.where(level: 1)).filter(h => h.location().page() == loc.page())
+  // Check if current page is a Part page (level 1 heading page)
+  let parts_on_page = query(<__part__>).filter(h => h.location().page() == loc.page())
 
   if parts_on_page.len() > 0 {
     return // Part pages don't show header
   }
 
-  // 2. Check if current page is a Chapter first page (level 2 heading page)
-  let chapters_on_page = query(heading.where(level: 2)).filter(h => h.location().page() == loc.page())
+  // Check if current page is a Chapter first page (level 2 heading page)
+  let chapters_on_page = query(<__chapter__>).filter(h => h.location().page() == loc.page())
 
   if chapters_on_page.len() > 0 {
     return // Chapter first pages don't show header
   }
 
-  // 3. Find the current effective chapter (level 2, both numbered and unnumbered)
+  // Find the last chapter with page <= current page
   let all_chapters = query(heading.where(level: 2))
-
-  // 4. Find the last chapter with page <= current page
   let current_chapter = none
   for ch in all_chapters {
     if ch.location().page() <= loc.page() {
@@ -309,7 +279,7 @@
     }
   }
 
-  // 5. Display header if valid chapter found
+  // Display header if valid chapter found
   if current_chapter != none {
     align(cfg.header-alignment)[
       #text(cfg.header-size)[
@@ -336,7 +306,7 @@
 
   // Part pages don't show footer (unless configured otherwise)
   if not cfg.footer-show-on-part-pages {
-    let parts_on_page = query(heading.where(level: 1)).filter(h => h.location().page() == loc.page())
+    let parts_on_page = query(<__part__>).filter(h => h.location().page() == loc.page())
     if parts_on_page.len() > 0 {
       return
     }
@@ -350,9 +320,22 @@
 
 #let extended_include(path, offset: 0) = context {
   set heading(offset: offset)
-  show heading: it => {
-    if it.level <= 2 and not in-container.get() {
-      pagebreak(weak: true)
+
+  // Ensure headings within grids/blocks will not become part/chapter
+  show grid: it => {
+    set heading(offset: calc.max(3, offset), outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
+    }
+    it
+  }
+
+  show block: it => {
+    set heading(offset: calc.max(3, offset), outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
     }
     it
   }
@@ -427,14 +410,14 @@
   }
 
   // Code block rendering: support codly, builtin, or custom engines
-  // Step 1: Initialize codly if needed (must be at top level)
+  // Initialize codly if needed (must be at top level)
   show: if cfg.codeblock-engine == "codly" {
     codly-init.with()
   } else {
     it => it
   }
 
-  // Step 2: Configure codly if it's the selected engine
+  // Configure codly if it's the selected engine
   if cfg.codeblock-engine == "codly" {
     // Build default configuration
     let default-codly-config = (
@@ -449,7 +432,7 @@
     codly(..default-codly-config, ..cfg.codly-options)
   }
 
-  // Step 3: Apply show rules for non-codly engines
+  // Apply show rules for non-codly engines
   show raw.where(block: true): it => {
     if cfg.codeblock-engine == "builtin" {
       // Use Typst's default raw block styling
@@ -473,7 +456,7 @@
     }
   }
 
-  // Step 4: Handle inline code (always apply for non-codly)
+  // Handle inline code (always apply for non-codly)
   show raw.where(block: false): it => {
     if cfg.codeblock-engine == "custom" and cfg.codeblock-custom-show != none {
       set text(font: cfg.code-font)
@@ -502,9 +485,31 @@
     it
   }
 
+  // Ensure headings within grids/blocks will not become part/chapter
+  show grid: it => {
+    set heading(offset: 3, outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
+    }
+    it
+  }
+
+  show block: it => {
+    set heading(offset: 3, outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
+    }
+    it
+  }
+
   show heading: it => context {
     let loc = here()
+
     if it.level == 1 {
+      colbreak(weak: true)
+
       if partcounter.get().first() == 1 and it.numbering != none {
         partcounter.step()
         counter(page).update(1)
@@ -520,6 +525,8 @@
         #text(cfg.heading-size-part)[#strong(it.body)]
       ]
     } else if it.level == 2 {
+      colbreak(weak: true)
+
       align(left + top)[
         #if it.numbering != none {
           // Get current value before stepping (for display)

@@ -55,9 +55,16 @@ function extract_typst_body(content::String)
     preamble_end = findfirst(i -> strip(lines[i]) == ")", eachindex(lines))
     body_start = preamble_end === nothing ? 1 : preamble_end + 1
 
-    # Skip empty lines after preamble
-    while body_start <= length(lines) && isempty(strip(lines[body_start]))
-        body_start += 1
+    # Skip empty lines and page labels after preamble
+    # Page labels look like: #[] #label("file.md#__page__")
+    while body_start <= length(lines)
+        line = strip(lines[body_start])
+        # Skip empty lines, standalone #[], and page labels
+        if isempty(line) || line == "#[]" || startswith(line, "#[] #label(")
+            body_start += 1
+        else
+            break
+        end
     end
 
     return join(lines[body_start:end], '\n')

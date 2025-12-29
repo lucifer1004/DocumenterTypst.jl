@@ -298,8 +298,7 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
                     @test isfile(joinpath(builddir, "nested", "with_image.typ"))
                     @test isfile(joinpath(builddir, "nested", "level3.typ"))
 
-                    # Verify extended_heading no longer has within-block parameter
-                    @test !contains(content, "within-block:")
+                    @test contains(content, "#heading(")
                 else
                     # For other platforms, verify PDF was created
                     pdffile = joinpath(builddir, "PureTypstTest-0.1.0.pdf")
@@ -309,6 +308,130 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
             end
         else
             @warn "Pure Typst fixture not found at $fixture_dir, skipping test"
+        end
+    end
+
+    @testset "Enhanced Typst with Documenter Directives" begin
+        fixture_dir = joinpath(@__DIR__, "fixtures", "enhanced_typst")
+
+        if isdir(fixture_dir)
+            mktempdir() do tmpdir
+                # Copy fixture to temporary directory
+                cp(fixture_dir, joinpath(tmpdir, "enhanced_typst"))
+                test_dir = joinpath(tmpdir, "enhanced_typst")
+
+                # Run makedocs
+                cd(test_dir) do
+                    include(joinpath(test_dir, "make.jl"))
+                end
+
+                builddir = joinpath(test_dir, "build")
+                @test isdir(builddir)
+
+                # Check for platform="none"
+                if PLATFORM == "none"
+                    typfile = joinpath(builddir, "EnhancedTypstTest-0.1.0.typ")
+                    @test isfile(typfile)
+
+                    main_content = read(typfile, String)
+
+                    # Verify enhanced.typ is included
+                    @test contains(main_content, "#extended_include(\"enhanced.typ\"")
+
+                    # Read the processed enhanced.typ
+                    enhanced_file = joinpath(builddir, "enhanced.typ")
+                    @test isfile(enhanced_file)
+
+                    enhanced_content = read(enhanced_file, String)
+
+                    # Test @typst-docs directive processing
+                    @test contains(enhanced_content, "#raw(\"EnhancedTypstTest.greet\"")
+                    @test contains(enhanced_content, "#raw(\"EnhancedTypstTest.add_numbers\"")
+                    @test contains(enhanced_content, "Greet a person by name")
+                    @test contains(enhanced_content, "Add two numbers together")
+                    # Verify docstring code blocks are rendered correctly
+                    @test contains(enhanced_content, "#raw(\"greet(name::String) -> String\"")
+
+                    # Test @typst-example directive processing
+                    @test contains(enhanced_content, "EnhancedTypstTest.add_numbers(5, 7)")
+                    @test contains(enhanced_content, "Result: 12")
+                    # Verify proper Typst escaping (double quotes, not single quotes)
+                    @test contains(enhanced_content, "#raw(\"Result: 12\"")
+                    @test !contains(enhanced_content, "#raw('Result: 12'")
+
+                    # Test @typst-ref directive processing
+                    @test contains(enhanced_content, "#link(label(\"enhanced.typ#EnhancedTypstTest.greet\"))")
+
+                    # Verify native Typst content is preserved
+                    @test contains(enhanced_content, "#table(")
+                    @test contains(enhanced_content, "#align(center)")
+                else
+                    # For other platforms, verify PDF was created
+                    pdffile = joinpath(builddir, "EnhancedTypstTest-0.1.0.pdf")
+                    @test isfile(pdffile)
+                    @test filesize(pdffile) > 1000
+                end
+            end
+        else
+            @warn "Enhanced Typst fixture not found at $fixture_dir, skipping test"
+        end
+    end
+
+    @testset "Link Edge Cases (PageLink without fragment)" begin
+        fixture_dir = joinpath(@__DIR__, "fixtures", "link_edge_cases")
+
+        if isdir(fixture_dir)
+            mktempdir() do tmpdir
+                # Copy fixture to temporary directory
+                cp(fixture_dir, joinpath(tmpdir, "link_edge_cases"))
+                test_dir = joinpath(tmpdir, "link_edge_cases")
+
+                # Run makedocs
+                cd(test_dir) do
+                    include(joinpath(test_dir, "make.jl"))
+                end
+
+                builddir = joinpath(test_dir, "build")
+                @test isdir(builddir)
+
+                # Check for platform="none"
+                if PLATFORM == "none"
+                    typfile = joinpath(builddir, "LinkEdgeCasesTest.typ")
+                    @test isfile(typfile)
+
+                    content = read(typfile, String)
+
+                    # Test 1: Page-level labels exist for pages WITHOUT headings
+                    @test contains(content, "#label(\"no_heading.md#__page__\")")
+                    @test contains(content, "#label(\"empty.md#__page__\")")
+                    @test contains(content, "#label(\"only_content.md#__page__\")")
+
+                    # Test 2: Links to pages WITH headings use first heading
+                    @test contains(content, "link(label(\"normal.md#Normal-Page\"))")
+                    @test contains(content, "link(label(\"multiple.md#Multiple-Headings\"))")
+                    @test contains(content, "link(label(\"nested/deep.md#Nested-Deep-Page\"))")
+
+                    # Test 3: Links to pages WITHOUT headings use page label
+                    @test contains(content, "link(label(\"no_heading.md#__page__\"))")
+                    @test contains(content, "link(label(\"empty.md#__page__\"))")
+                    @test contains(content, "link(label(\"only_content.md#__page__\"))")
+
+                    # Test 4: Explicit fragment references still work
+                    @test contains(content, "link(label(\"normal.md#Second-Section\"))")
+
+                    # Test 5: Verify links are generated (not just text)
+                    # Should NOT have pattern "][text]" which indicates broken link
+                    @test !contains(content, "][Normal Page]")
+                    @test !contains(content, "][No Heading Page]")
+                else
+                    # For other platforms, verify PDF was created
+                    pdffile = joinpath(builddir, "LinkEdgeCasesTest.pdf")
+                    @test isfile(pdffile)
+                    @test filesize(pdffile) > 1000
+                end
+            end
+        else
+            @warn "Link Edge Cases fixture not found at $fixture_dir, skipping test"
         end
     end
 end

@@ -244,10 +244,8 @@ end
 
 function typst(io::Context, node::Node, heading::MarkdownAST.Heading)
     N = heading.level
-    _print(
-        io,
-        "#extended_heading(level: $(min(io.depth + N - 1, length(DOCUMENT_STRUCTURE))), ["
-    )
+    level = min(io.depth + N - 1, length(DOCUMENT_STRUCTURE))
+    _print(io, "#heading(level: $(level), [")
     io.in_header = true
     typst(io, node.children)
     io.in_header = false
@@ -315,7 +313,7 @@ function typst(io::Context, node::Node, ::MarkdownAST.Paragraph)
 end
 
 function typst(io::Context, node::Node, ::MarkdownAST.BlockQuote)
-    _println(io, "#safe-block(inset: 10pt)[")
+    _println(io, "#quote[")
     old_in_block = io.in_block
     io.in_block = true
     typst(io, node.children)
@@ -410,8 +408,9 @@ function typst_list(io::Context, node::Node, list::MarkdownAST.List, depth::Int)
         end
 
         io.in_block = old_in_block
-        # No extra newline - Paragraph already provides one
     end
+
+    _println(io)
 
     return nothing
 end
@@ -565,11 +564,11 @@ end
 # PageLink - internal cross-reference links resolved by Documenter
 function typst(io::Context, node::Node, link::Documenter.PageLink)
     # PageLink represents a resolved @ref link or # same-file reference
-    if link.fragment !== nothing && !isempty(link.fragment)
-        # pagekey is relative path without build prefix, need to add it
-        pagekey = Documenter.pagekey(io.doc, link.page)
-        full_path = with_build_prefix(io.state, pagekey)
+    pagekey = Documenter.pagekey(io.doc, link.page)
+    full_path = with_build_prefix(io.state, pagekey)
 
+    if link.fragment !== nothing && !isempty(link.fragment)
+        # Link to specific anchor in page
         # Case-insensitive lookup: link.fragment might be lowercase, but we need actual case
         # The lowercase_anchors map key includes full build path: "build_path#lowercase_label"
         lookup_key = full_path * "#" * lowercase(link.fragment)
@@ -579,8 +578,19 @@ function typst(io::Context, node::Node, link::Documenter.PageLink)
         label_id = make_label_id(io.doc, full_path, anchor_label)
         _print(io, "#link(label(\"", label_id, "\"))[")
     else
-        # Link to a page without fragment - just render the text
-        _print(io, "[")
+        # Link to page without fragment - link to first heading if exists
+        default_anchor = get(io.state.page_first_anchors, full_path, nothing)
+
+        if !isnothing(default_anchor)
+            # Page has headings, link to the first one
+            label_id = make_label_id(io.doc, full_path, default_anchor)
+            _print(io, "#link(label(\"", label_id, "\"))[")
+        else
+            # Page has no headings, use a page-level label
+            # We'll generate a label like "path/to/file.md#page"
+            label_id = make_label_id(io.doc, full_path, "__page__")
+            _print(io, "#link(label(\"", label_id, "\"))[")
+        end
     end
     typst(io, node.children)
     return _print(io, "]")

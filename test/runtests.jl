@@ -142,15 +142,15 @@ include("test_helpers.jl")
         @testset "Headings" begin
             output = render_to_typst("# Level 1")
             @test strip(output) ==
-                "#extended_heading(level: 1, [Level 1])\n\n #label(\"index.md#Level-1\")"
+                "#heading(level: 1, [Level 1])\n\n #label(\"index.md#Level-1\")"
 
             output = render_to_typst("## Level 2")
             @test strip(output) ==
-                "#extended_heading(level: 2, [Level 2])\n\n #label(\"index.md#Level-2\")"
+                "#heading(level: 2, [Level 2])\n\n #label(\"index.md#Level-2\")"
 
             output = render_to_typst("### Level 3")
             @test strip(output) ==
-                "#extended_heading(level: 3, [Level 3])\n\n #label(\"index.md#Level-3\")"
+                "#heading(level: 3, [Level 3])\n\n #label(\"index.md#Level-3\")"
         end
 
         @testset "Paragraphs" begin
@@ -236,7 +236,7 @@ include("test_helpers.jl")
 
         @testset "Block Quote" begin
             output = render_to_typst("> This is a quote\n> Multiple lines")
-            @test strip(output) == "#safe-block(inset: 10pt)[\nThis is a quote Multiple lines\n]"
+            @test strip(output) == "#quote[\nThis is a quote Multiple lines\n]"
         end
 
         @testset "Thematic Break" begin
@@ -490,7 +490,6 @@ include("test_helpers.jl")
             # Verify various elements are present with exact structures
             @test contains(content, "-")  # List items (unordered)
             @test contains(content, "+")  # Ordered list items
-            @test contains(content, "#safe-block(inset: 10pt)[")  # BlockQuote
             @test contains(content, "#line(length: 100%)")   # ThematicBreak
             @test contains(content, "#admonition(type: \"note\"")  # Admonition
             @test contains(content, "#table(")    # Table
@@ -640,7 +639,6 @@ include("test_helpers.jl")
             """
         )
         # Verify all nested formatting constructs are present
-        @test contains(output, "#safe-block")  # BlockQuote now uses safe-block
         @test contains(output, "#strong")
         @test contains(output, "#raw")
         @test contains(output, "#emph")
@@ -1011,7 +1009,6 @@ include("test_helpers.jl")
                 """
             )
             @test contains(output, "Item 1")
-            @test contains(output, "#safe-block")  # blockquote
             @test contains(output, "#strong")  # bold
             @test contains(output, "#raw(")  # code
             @test contains(output, "#emph")  # italic in Item 2

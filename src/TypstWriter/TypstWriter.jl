@@ -367,6 +367,7 @@ Contains lookup tables and cached values that don't change during the rendering 
 """
 struct RenderState
     lowercase_anchors::Dict{String, String}  # lowercase key -> original label
+    page_first_anchors::Dict{String, String} # file -> first anchor id (for PageLink without fragment)
     build_path::String  # Pre-normalized build path (for performance)
 end
 
@@ -451,58 +452,402 @@ const DOCUMENT_STRUCTURE = (
 )
 
 """
-    build_anchor_lookup(doc::Document) -> Dict{String,String}
+    build_render_state_lookups(doc::Document) -> (Dict{String,String}, Dict{String,String})
 
-Build a case-insensitive anchor lookup map.
+Build lookup tables for rendering state during a single preprocessing pass.
 
-Returns a dictionary mapping lowercase keys (file#label) to original anchor labels.
-This allows case-insensitive matching of anchor references while preserving the
-original case for label generation.
+Returns two dictionaries:
+1. `lowercase_anchors`: Maps lowercase keys (file#label) to original anchor labels
+   for case-insensitive anchor matching.
+2. `page_first_anchors`: Maps normalized file paths to their first anchor id
+   (determined by minimum anchor.order), used for PageLink without fragment.
 
 # Implementation
-Iterates through all anchors in doc.internal.headers.map and creates entries
-using normalized paths and anchor labels (which include -nth suffixes for uniqueness).
-
+Single pass through doc.internal.headers.map to build both lookups simultaneously.
 Optimized to minimize function calls and string operations.
-"""
-function build_anchor_lookup(doc::Documenter.Document)
-    lookup = Dict{String, String}()
 
-    for (_, filedict) in doc.internal.headers.map
+# Performance
+- Time: O(N) where N = total number of headings
+- Space: O(N) + O(P) where P = number of pages
+"""
+function build_render_state_lookups(doc::Documenter.Document)
+    lowercase_anchors = Dict{String, String}()
+    page_first_anchors = Dict{String, String}()
+    page_min_order = Dict{String, Int}()  # Temporary: track minimum order per page
+
+    for (id, filedict) in doc.internal.headers.map
         for (file, anchors) in filedict
             # Normalize file path once per file
             normalized_file = replace(file, "\\" => "/")
+
             for anchor in anchors
-                # Get label once per anchor
+                # Build lowercase lookup
                 label = Documenter.anchor_label(anchor)
-                # Build key directly without intermediate allocations
                 key = normalized_file * "#" * lowercase(label)
-                lookup[key] = label
+                lowercase_anchors[key] = label
+
+                # Track first anchor per page (by minimum order)
+                if !haskey(page_min_order, normalized_file) ||
+                        anchor.order < page_min_order[normalized_file]
+                    page_min_order[normalized_file] = anchor.order
+                    page_first_anchors[normalized_file] = id
+                end
             end
         end
     end
 
-    return lookup
+    return lowercase_anchors, page_first_anchors
+end
+
+"""
+    preprocess_typst_content(context::Context, content::String) -> String
+
+Preprocess Typst file content to expand Documenter tool directives.
+
+Supports the following comment-based directives:
+- `// @typst-docs MyModule.function` - Generate API documentation
+- `// @typst-example` ... `// @typst-example-end` - Execute and show code examples
+- `// @typst-ref target` - Generate cross-reference link
+
+# Examples
+
+Input .typ file:
+```typst
+= API Reference
+
+// @typst-docs MyModule.myfunction
+
+= Examples
+
+// @typst-example
+// x = 1 + 1
+// println(x)
+// @typst-example-end
+```
+
+Output (preprocessed):
+```typst
+= API Reference
+
+#raw("MyModule.myfunction", block: false) #label("...") -- Function.
+
+#grid(columns: (2em, 1fr), [], [
+  Documentation content here...
+])
+
+= Examples
+
+#raw("x = 1 + 1\\nprintln(x)", block: true, lang: "julia")
+
+#raw("2", block: true, lang: "text")
+```
+"""
+function preprocess_typst_content(context::Context, content::String)
+    lines = split(content, '\n')
+    output = String[]
+    i = 1
+
+    while i <= length(lines)
+        line = lines[i]
+        stripped = strip(line)
+
+        # Match: // @typst-docs Binding.name
+        if occursin(r"^//\s*@typst-docs\s+", stripped)
+            m = match(r"^//\s*@typst-docs\s+(.+)$", stripped)
+            if m !== nothing
+                binding_str = strip(m.captures[1])
+                docs_code = generate_docs_typst(context, binding_str)
+                push!(output, docs_code)
+                i += 1
+                continue
+            end
+        end
+
+        # Match: // @typst-example
+        if occursin(r"^//\s*@typst-example\s*$", stripped)
+            code_lines = String[]
+            i += 1
+
+            # Collect code lines until @typst-example-end
+            while i <= length(lines)
+                curr_line = lines[i]
+                curr_stripped = strip(curr_line)
+
+                if occursin(r"^//\s*@typst-example-end", curr_stripped)
+                    break
+                end
+
+                # Extract code from comment (remove "// " prefix)
+                if startswith(curr_stripped, "//")
+                    code_part = length(curr_stripped) > 2 ? curr_stripped[3:end] : ""
+                    # Remove leading space if present
+                    if startswith(code_part, " ")
+                        code_part = code_part[2:end]
+                    end
+                    push!(code_lines, code_part)
+                end
+
+                i += 1
+            end
+
+            if !isempty(code_lines)
+                code = join(code_lines, '\n')
+                example_code = generate_example_typst(context, code)
+                push!(output, example_code)
+            end
+
+            i += 1
+            continue
+        end
+
+        # Match: // @typst-ref target
+        # This can appear inline, so we need to handle it specially
+        if occursin(r"//\s*@typst-ref\s+", stripped)
+            # Find and replace all @typst-ref occurrences in the line
+            modified_line = line
+            for m in eachmatch(r"//\s*@typst-ref\s+([^\s]+)", line)
+                target = m.captures[1]
+                ref_code = generate_ref_typst(context, target)
+                # Replace the comment with the actual link
+                modified_line = replace(modified_line, m.match => ref_code)
+            end
+            push!(output, modified_line)
+            i += 1
+            continue
+        end
+
+        # Regular line - keep as is
+        push!(output, line)
+        i += 1
+    end
+
+    return join(output, '\n')
+end
+
+"""
+    generate_docs_typst(context::Context, binding_str::String) -> String
+
+Generate Typst code for documenting a Julia binding.
+
+Looks up the docstring for the specified binding and converts it to Typst format,
+mimicking the output of `@docs` blocks in Markdown files.
+"""
+function generate_docs_typst(context::Context, binding_str::AbstractString)
+    io = IOBuffer()
+
+    try
+        # Get the first module from the document
+        if isempty(context.doc.blueprint.modules)
+            return "// ERROR: No modules found for @typst-docs $(binding_str)"
+        end
+
+        mod = first(context.doc.blueprint.modules)
+
+        # Parse binding string and navigate to the object
+        parts = split(String(binding_str), '.')
+        obj = mod
+
+        for part in parts[2:end]  # Skip first part (module name)
+            if isdefined(obj, Symbol(part))
+                obj = getfield(obj, Symbol(part))
+            else
+                return "// WARNING: $(binding_str) not found in module"
+            end
+        end
+
+        # Get documentation as Markdown
+        doc_md = Base.Docs.doc(obj)
+
+        if doc_md === nothing || (doc_md isa Markdown.MD && isempty(doc_md.content))
+            @warn "No documentation found for binding" binding = binding_str
+            return "// WARNING: No documentation found for $(binding_str)"
+        end
+
+        # Convert Markdown to MarkdownAST using Documenter's parser
+        # This ensures compatibility with how Documenter processes docstrings
+        # mdparse with mode=:blocks returns a vector of nodes
+        ast_nodes = Documenter.mdparse(string(doc_md); mode = :blocks)
+
+        # Generate Typst output matching DocsNode format
+        label_id = make_label_id(context.doc, context.filename, String(binding_str))
+
+        # Header line (mimicking ast_conversion.jl line 118-121)
+        print(io, "#raw(\"")
+        # Manually escape for IOBuffer
+        for ch in String(binding_str)
+            print(io, get(_typstescape_chars_in_string, ch, ch))
+        end
+        print(io, "\", block: false) #label(\"", label_id, "\")")
+        println(io, " -- Function.\n")
+
+        # Body in grid (mimicking ast_conversion.jl line 123)
+        println(io, "#grid(columns: (2em, 1fr), [], [")
+
+        # Render docstring content using existing typst() functions
+        # Create a temporary context for rendering to the same IOBuffer
+        temp_context = Context(io, context.doc, context.state)
+        temp_context.filename = context.filename
+        temp_context.depth = context.depth
+
+        # Render AST nodes (mdparse returns an array of nodes)
+        _println(temp_context)
+        typst(temp_context, ast_nodes)
+        _println(temp_context)
+
+        println(io, "])")
+
+    catch e
+        @error "Failed to generate docs for binding" binding = binding_str exception = (e, catch_backtrace())
+        return "// ERROR generating docs for $(binding_str): $(sprint(showerror, e))"
+    end
+
+    return String(take!(io))
+end
+
+"""
+    generate_example_typst(context::Context, code::String) -> String
+
+Generate Typst code for a runnable Julia code example.
+
+Executes the Julia code in a sandbox module and captures the output,
+similar to `@example` blocks in Markdown files.
+"""
+function generate_example_typst(context::Context, code::String)
+    io = IOBuffer()
+
+    try
+        # Display the code block using proper Typst escaping
+        escaped_code = typstescstr(code)
+        println(io, "#raw(\"", escaped_code, "\", block: true, lang: \"julia\")")
+        println(io)
+
+        # Execute the code and capture output
+        if !isempty(context.doc.blueprint.modules)
+            mod = first(context.doc.blueprint.modules)
+
+            result = nothing
+            captured_output = ""
+
+            # Use a temporary file to capture stdout (most reliable method)
+            mktemp() do temp_path, temp_io
+                try
+                    # Redirect stdout to the temp file
+                    original_stdout = stdout
+                    redirect_stdout(temp_io)
+
+                    try
+                        # Evaluate the code
+                        result = Core.eval(mod, Meta.parse("begin\n" * code * "\nend"))
+                    catch eval_error
+                        @warn "Example block execution failed" code exception = (eval_error, catch_backtrace())
+                    finally
+                        # Always restore stdout
+                        redirect_stdout(original_stdout)
+                        flush(temp_io)
+                    end
+
+                    # Read captured output from temp file
+                    captured_output = read(temp_path, String)
+                catch redirect_error
+                    @warn "Failed to capture stdout" exception = (redirect_error, catch_backtrace())
+                end
+            end
+
+            # Display output and/or result
+            if !isempty(captured_output)
+                escaped_output = typstescstr(rstrip(captured_output))
+                println(io, "\n#raw(\"", escaped_output, "\", block: true, lang: \"text\")")
+            elseif result !== nothing
+                escaped_result = typstescstr(repr(result))
+                println(io, "\n#raw(\"", escaped_result, "\", block: true, lang: \"text\")")
+            end
+        end
+
+    catch e
+        @error "Failed to generate example block" code exception = (e, catch_backtrace())
+        println(io, "// ERROR executing example: $(sprint(showerror, e))")
+    end
+
+    return String(take!(io))
+end
+
+"""
+    generate_ref_typst(context::Context, target::String) -> String
+
+Generate a Typst cross-reference link.
+
+Converts a reference target (e.g., "MyModule.function" or "file.typ#section")
+into a Typst `#link(label(...))` call.
+"""
+function generate_ref_typst(context::Context, target::AbstractString)
+    try
+        # Check if target contains a file reference
+        if occursin('#', target)
+            parts = split(target, '#'; limit = 2)
+            file = parts[1]
+            fragment = parts[2]
+
+            # If file doesn't end with .typ or .md, assume it's just a fragment
+            if !occursin('.', file)
+                # It's actually just a complex anchor name
+                label_id = make_label_id(context.doc, context.filename, target)
+            else
+                # It's a file#fragment reference
+                full_path = with_build_prefix(context.state, file)
+                label_id = make_label_id(context.doc, full_path, fragment)
+            end
+        else
+            # Simple reference - use current file
+            label_id = make_label_id(context.doc, context.filename, target)
+        end
+
+        return "#link(label(\"$(label_id)\"))[$(target)]"
+
+    catch e
+        @error "Failed to generate ref link" target exception = (e, catch_backtrace())
+        return "// ERROR: Invalid reference target $(target)"
+    end
 end
 
 """
     include_typst_file(context::Context, title::AbstractString, depth::Int)
 
-Include a pure Typst file using #include directive with automatic heading level adjustment.
+Include a Typst file with automatic preprocessing and heading level adjustment.
 
-Uses Typst's `offset` parameter to adjust heading levels and `#include` to preserve
-relative paths for images and other resources.
+This function:
+1. Reads the source .typ file
+2. Preprocesses it to expand @typst-docs, @typst-example, and @typst-ref directives
+3. Writes the processed version to the build directory
+4. Includes it with appropriate heading offset
 
 # Arguments
 - `context::Context`: The rendering context
 - `title::AbstractString`: The chapter/section title from pages config (can be empty)
 - `depth::Int`: The nesting depth in the pages configuration
 
-# Implementation Details
-- Validates source file existence before rendering
-- Calculates heading offset: `depth + (has_title ? 1 : 0) - 1`
-- Generates a scoped block with `set heading(offset: N)`
-- Uses `#include "path"` to maintain file's relative path context
+# Preprocessing Directives
+
+Supports these comment-based directives in .typ files:
+- `// @typst-docs Binding` - Generate API documentation
+- `// @typst-example` ... `// @typst-example-end` - Execute code and show results
+- `// @typst-ref target` - Generate cross-reference link
+
+# Examples
+
+Input (.typ file):
+```typst
+= API
+// @typst-docs MyModule.func
+```
+
+Output (generated):
+```typst
+= API
+#raw("MyModule.func", block: false) #label("...") -- Function.
+#grid(columns: (2em, 1fr), [], [
+  Documentation content...
+])
+```
 """
 function include_typst_file(context::Context, title::AbstractString, depth::Int)
     # Verify source file exists
@@ -511,10 +856,27 @@ function include_typst_file(context::Context, title::AbstractString, depth::Int)
         error("Typst file not found: $(src_path)")
     end
 
+    # Read and preprocess the .typ file
+    content = read(src_path, String)
+    processed_content = preprocess_typst_content(context, content)
+
+    # Write processed content to build directory
+    build_path = joinpath(pwd(), context.filename)
+    mkpath(dirname(build_path))
+    write(build_path, processed_content)
+
     # Insert chapter/section title if provided
     if !isempty(title) && depth <= length(DOCUMENT_STRUCTURE)
-        _println(context, "#extended_heading(level: $(depth), [$(title)])\n")
+        _println(context, "#heading(level: $(depth), [$(title)])\n")
     end
+
+    # Insert page-level label for .typ files
+    # Since Documenter doesn't preprocess .typ files to build anchor maps,
+    # we need to insert a default label so PageLink without fragment can work
+    full_path = with_build_prefix(context.state, context.filename)
+    page_label = "__page__"
+    label_id = make_label_id(context.doc, full_path, page_label)
+    _println(context, "#[] #label(\"", label_id, "\")\n")
 
     # Calculate heading offset
     # depth: position in pages hierarchy
@@ -541,7 +903,8 @@ function render(doc::Documenter.Document, settings::Typst = Typst())
                 open("$(fileprefix).typ", "w") do io
                     # Build global rendering state with cached build path
                     build_path = replace(doc.user.build, "\\" => "/")
-                    state = RenderState(build_anchor_lookup(doc), build_path)
+                    lowercase_anchors, page_first_anchors = build_render_state_lookups(doc)
+                    state = RenderState(lowercase_anchors, page_first_anchors, build_path)
                     context = Context(io, doc, state)
 
                     writeheader(context, doc, settings)
@@ -549,7 +912,7 @@ function render(doc::Documenter.Document, settings::Typst = Typst())
                         context.filename = filename
                         empty!(context.footnote_defs)
                         if 1 <= depth <= length(DOCUMENT_STRUCTURE)
-                            header_text = "#extended_heading(level: $(depth), [$(title)])\n"
+                            header_text = "#heading(level: $(depth), [$(title)])\n"
                             if isempty(filename)
                                 _println(context, header_text)
                             elseif endswith(filename, ".typ")
@@ -565,6 +928,16 @@ function render(doc::Documenter.Document, settings::Typst = Typst())
 
                                     context.depth = depth + (isempty(title) ? 0 : 1)
                                     context.depth > depth && _println(context, header_text)
+
+                                    # Insert page-level label if page has no headings
+                                    # This allows PageLink without fragment to work even for heading-less pages
+                                    full_path = with_build_prefix(state, path)
+                                    if !haskey(page_first_anchors, full_path)
+                                        # No headings found, insert invisible page label at the start
+                                        label_id = make_label_id(doc, full_path, "__page__")
+                                        _println(context, "#[] #label(\"", label_id, "\")\n")
+                                    end
+
                                     typst_toplevel(context, page.mdast.children)
                                 end
                             end

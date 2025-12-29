@@ -70,17 +70,14 @@ That's it! Your markdown files need no changes.
 
 LaTeX math **just works** - no changes needed!
 
-`````markdown
+````markdown
 # Works in both backends
 
 `\\alpha + \\beta = \\gamma`
 
-````math
-\\sum_{i=1}^n i = \\frac{n(n+1)}{2}
-\```
-````
-`````
-
+```math
+\sum_{i=1}^n i = \frac{n(n+1)}{2}
+```
 ````
 
 ### Custom Styling
@@ -161,18 +158,6 @@ If you're using standard Documenter features, migration is seamless.
   ...
 })
 ```
-
-## Performance Comparison
-
-Tested on Julia documentation (large, complex document):
-
-| Backend             | Time      | Size       |
-| ------------------- | --------- | ---------- |
-| LaTeX (native)      | ~8 min    | 2.1 MB     |
-| LaTeX (tectonic)    | ~5 min    | 2.1 MB     |
-| **DocumenterTypst** | **< 60s** | **2.0 MB** |
-
-_On M4 Max, your results may vary_
 
 ## Migration Checklist
 
@@ -270,9 +255,7 @@ Simpler and faster!
 ## Success Stories
 
 > "Migration took 5 minutes, builds are 10x faster!" - User A
-
 > "Finally, no more LaTeX installation issues in CI" - User B
-
 > "The error messages actually make sense now" - User C
 
 ## Next Steps
@@ -282,4 +265,3 @@ After migration:
 1. [Customize styling](../manual/styling.md)
 2. [Explore Typst math](../manual/math.md)
 3. [Optimize CI builds](advanced.md#performance-optimization)
-````

@@ -15,8 +15,8 @@ For contributing guidelines, see [Contributing](contributing.md).
 ---
 
 !!! note "Automatic Generation"
-This page is automatically generated from `CHANGELOG.md` using the Documenter changelog extension.
-To update it, edit `CHANGELOG.md` and rebuild the documentation.
+    This page is automatically generated from `CHANGELOG.md` using the Documenter changelog extension.
+    To update it, edit `CHANGELOG.md` and rebuild the documentation.
 
 ---
 

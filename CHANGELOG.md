@@ -5,6 +5,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.1.0
 
+### Added
+
+- Automatic PDF optimization using pdfcpu_jll [#8]
+- System font control via `use_system_fonts` option
+  - Uses Typst's `--ignore-system-fonts` flag when disabled
+- Detailed compilation timing for all stages [#8]
+- Support for pure Typst files (`.typ`) as documentation sources alongside Markdown files [#8]
+  - Automatic heading level adjustment using Typst's `offset` parameter
+  - Resource paths preserved via `#include` directive
+  - Mixed `.md` and `.typ` files in the same documentation project
+- Documenter directives in Typst files via preprocessing [#8]
+  - `// @typst-docs Module.function` - Include API documentation from docstrings
+  - `// @typst-example ... // @typst-example-end` - Execute Julia code and display output
+  - `// @typst-ref target` - Generate cross-reference links
+  - Uses `Documenter.mdparse()` for consistent docstring rendering
+
 ### Changed
 
 - **Documentation restructuring**: Improved organization and eliminated redundancy [#8]
@@ -14,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Simplified `index.md` and `README.md` to reduce duplication
   - Updated all internal links to reflect new structure
   - Unified all documentation to English (except example content demonstrating non-English features)
+- Refactored `extended_heading` to use Typst state mechanism instead of parameter passing [#8]
+  - Simplified function signature (removed `within-block` parameter)
+  - Uses `in-container` state for tracking block context
+  - Added `safe-block` wrapper for automatic state management
+- BlockQuote rendering now uses `safe-block` instead of `quote` function for consistent heading behavior [#8]
 
 ### Removed
 
@@ -27,28 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CI linkcheck failure**: Skip `deploydocs()` when running linkcheck to avoid permission errors [#8]
   - linkcheck job only needs read permissions and shouldn't attempt deployment
-
-### Added
-
-- Automatic PDF optimization using pdfcpu_jll [#8]
-- System font control via `use_system_fonts` option
-  - Uses Typst's `--ignore-system-fonts` flag when disabled
-- Detailed compilation timing for all stages [#8]
-- Support for pure Typst files (`.typ`) as documentation sources alongside Markdown files [#8]
-  - Automatic heading level adjustment using Typst's `offset` parameter
-  - Resource paths preserved via `#include` directive
-  - Mixed `.md` and `.typ` files in the same documentation project
-
-### Changed
-
-- Refactored `extended_heading` to use Typst state mechanism instead of parameter passing [#8]
-  - Simplified function signature (removed `within-block` parameter)
-  - Uses `in-container` state for tracking block context
-  - Added `safe-block` wrapper for automatic state management
-- BlockQuote rendering now uses `safe-block` instead of `quote` function for consistent heading behavior [#8]
-
-### Fixed
-
 - PDF file size bloat from uncompressed streams (100 MB → 15 MB for large documents after optimization) [#8]
 - PDF size bloat from Type 3 emoji fonts (can be disabled via `use_system_fonts=false`) [#8]
 

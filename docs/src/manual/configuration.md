@@ -409,9 +409,80 @@ makedocs(
 
 **Limitations**:
 
-- `.typ` files are **not processed by Documenter** (no `@docs`, no `@ref`)
 - Content is **only included in Typst/PDF output**, not HTML
 - Documenter's cross-reference system doesn't index `.typ` content
+
+### Documenter Directives in Typst Files
+
+!!! tip "New in v0.2.0"
+    You can now use Documenter-style directives within `.typ` files!
+
+While `.typ` files are not processed through Documenter's full pipeline, you can use special preprocessing directives to access Documenter features:
+
+#### `@typst-docs` - Include API Documentation
+
+```typst
+= API Reference
+
+// @typst-docs MyModule.function_name
+// @typst-docs MyModule.AnotherType
+```
+
+This will expand to the full docstring documentation, similar to `@docs` blocks in Markdown files.
+
+**Example output**:
+
+```typst
+#raw("MyModule.function_name") #label(...) -- Function.
+#extended_grid(columns: (2em, 1fr), [], [
+  // Formatted docstring content with code blocks, lists, etc.
+])
+```
+
+#### `@typst-example` - Execute and Display Code
+
+```typst
+= Examples
+
+// @typst-example
+// x = 1 + 1
+// println("Result: $x")
+// @typst-example-end
+```
+
+This executes the Julia code and displays both the code and its output, similar to `@example` blocks in Markdown.
+
+**Generated output**:
+
+```typst
+#raw("x = 1 + 1\nprintln(\"Result: \$x\")", block: true, lang: "julia")
+#raw("Result: 2", block: true, lang: "text")
+```
+
+#### `@typst-ref` - Cross-Reference Links
+
+```typst
+See also: // @typst-ref MyModule.related_function
+```
+
+This generates a clickable cross-reference link, similar to `@ref` in Markdown.
+
+**Generated output**:
+
+```typst
+See also: #link(label("file.typ#MyModule.related_function"))[MyModule.related_function]
+```
+
+#### How It Works
+
+1. **Preprocessing**: When a `.typ` file is included, DocumenterTypst scans for these special comments
+2. **Expansion**: Each directive is expanded into native Typst code
+
+**Limitations**:
+
+- Directives must be in comments starting with `//`
+- `@typst-example` code runs in the module's namespace (use fully qualified names if needed)
+- Cross-references only work within the Typst/PDF output
 
 See [Getting Started](getting_started.md) for a complete example.
 

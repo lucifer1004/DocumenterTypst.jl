@@ -1,4 +1,4 @@
-# Running Typst Backend Tests
+# Running Integration Tests
 
 ## Quick Start
 

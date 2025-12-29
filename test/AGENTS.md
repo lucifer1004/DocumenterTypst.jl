@@ -8,7 +8,8 @@
 test/
 ├── runtests.jl       # Main test suite (look here for examples)
 ├── test_helpers.jl   # render_to_typst(), extract_typst_body()
-└── typst_backend/    # Integration tests with actual compilation
+└── integration/      # Integration tests with actual compilation
+    └── fixtures/     # Test fixtures (enhanced_typst, pure_typst, link_edge_cases)
 ```
 
 ### Where to Add Tests

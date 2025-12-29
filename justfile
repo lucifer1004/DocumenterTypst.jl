@@ -9,16 +9,17 @@ default:
 test:
     julia --project -e 'using Pkg; Pkg.test()'
 
-# Run Typst backend integration tests
+# Run integration tests
 # Platforms: typst (default), native, none
-test-backend platform="typst":
-    @echo "Running Typst backend tests with platform: {{platform}}"
-    julia --project=test/typst_backend -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
-    julia --project=test/typst_backend -e 'ENV["TYPST_PLATFORM"]="{{platform}}"; include("test/typst_backend/runtests.jl")'
+test-integration platform="typst":
+    @echo "Running integration tests with platform: {{platform}}"
+    julia --project=test/integration -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+    julia --project=test/integration -e 'ENV["TYPST_PLATFORM"]="{{platform}}"; include("test/integration/runtests.jl")'
 
-# Format code with Runic
+# Format Julia code with Runic
 format:
     julia -e 'using Pkg; Pkg.add("Runic"); using Runic; Runic.main(["--verbose", "--inplace", "."])'
+    markdownlint-cli2 --fix "**/*.md"
 
 # Build HTML documentation
 docs:
@@ -40,7 +41,7 @@ clean:
     @echo "Cleaning build artifacts..."
     julia -e 'isdir(joinpath("docs", "build")) && rm(joinpath("docs", "build"), recursive=true, force=true)'
     julia -e 'isdir(joinpath("docs", "build-typst")) && rm(joinpath("docs", "build-typst"), recursive=true, force=true)'
-    julia -e 'isdir(joinpath("test", "typst_backend", "builds")) && rm(joinpath("test", "typst_backend", "builds"), recursive=true, force=true)'
+    julia -e 'isdir(joinpath("test", "integration", "builds")) && rm(joinpath("test", "integration", "builds"), recursive=true, force=true)'
     julia -e 'isfile(joinpath("docs", "src", "release-notes.md")) && rm(joinpath("docs", "src", "release-notes.md"))'
     julia -e 'for (root, dirs, files) in walkdir("."); for file in files; if endswith(file, ".jl.cov") || endswith(file, ".jl.mem") || (occursin(".jl.", file) && endswith(file, ".cov")); try rm(joinpath(root, file)); catch; end; end; end; end'
 

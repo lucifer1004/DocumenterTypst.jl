@@ -1,0 +1,10 @@
+# Build outputs
+docs/build/
+docs/build-typst/
+
+# Test fixtures
+test/**/build/
+test/**/builds/
+
+# Dependencies
+node_modules/

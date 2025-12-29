@@ -5,7 +5,8 @@
 # - Typst backend specific tests (3 platforms: typst_jll, native, source-only)
 # - Code coverage via Codecov
 # - Documentation building and deployment
-# - Code formatting (Runic for Julia, Prettier for markdown/YAML)
+# - Code formatting (Runic for Julia)
+# - Markdown linting (markdownlint-cli2)
 # - Spell checking (Typos)
 # - Link checking
 # - Changelog enforcement
@@ -65,15 +66,21 @@ jobs:
         with:
           version: "1.5"
 
-  prettier:
-    name: Prettier (formatting)
+  markdownlint:
+    name: "Markdownlint (Markdown linting)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: creyD/prettier_action@v4.6
+      - uses: DavidAnson/markdownlint-cli2-action@v22
         with:
-          dry: True
-          prettier_options: --check **/*.md
+          globs: |
+            **/*.md
+            !**/node_modules
+            !docs/build
+            !docs/build-typst
+            !test/**/build
+            !test/**/builds
+            !test/**/build-debug
 
   typos:
     name: Spell Check with Typos
@@ -178,13 +185,13 @@ jobs:
 
       - name: Install package
         run: |
-          julia --project=test/typst_backend -e '
+          julia --project=test/integration -e '
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
 
-      - name: Run Typst backend tests
-        run: julia --project=test/typst_backend --code-coverage test/typst_backend/runtests.jl
+      - name: Run Integration tests
+        run: julia --project=test/integration --code-coverage test/integration/runtests.jl
         env:
           TYPST_PLATFORM: ${{ matrix.platform }}
 

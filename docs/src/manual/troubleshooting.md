@@ -64,6 +64,7 @@ Pkg.add("DocumenterTypst")
 1. Check for infinite loops in custom templates
 2. Use `platform="none"` to test without compilation
 3. Enable verbose output:
+
    ```bash
    export DOCUMENTER_VERBOSE="true"
    julia docs/make.jl
@@ -125,6 +126,7 @@ Pkg.add("DocumenterTypst")
 2. **Avoid absolute URLs** - Download images locally instead
 
 3. **Check file exists**:
+
    ```bash
    ls docs/src/assets/image.png
    ```
@@ -194,6 +196,7 @@ end
    ```
 
 3. **Clear cache**:
+
    ```bash
    rm -rf docs/build
    julia docs/make.jl
@@ -218,6 +221,7 @@ end
 2. **Install font** system-wide
 
 3. **Use font path**:
+
    ```julia
    format = DocumenterTypst.Typst(
        platform = "native",

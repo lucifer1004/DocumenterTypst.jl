@@ -57,9 +57,9 @@ The package consists of two modules:
 - **`DocumenterTypst.TypstWriter`**: Internal rendering engine
 
 !!! note "Internal APIs"
-The `TypstWriter` module is not part of the public API and may change without notice.
-If you need to extend or customize the Typst rendering, please open an issue to discuss
-making specific APIs public.
+    The `TypstWriter` module is not part of the public API and may change without notice.
+    If you need to extend or customize the Typst rendering, please open an issue to discuss
+    making specific APIs public.
 
 ## See Also
 
