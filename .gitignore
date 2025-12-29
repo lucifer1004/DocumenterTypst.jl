@@ -4,3 +4,5 @@ Manifest*.toml
 !/CHANGELOG.md
 !/AGENTS.md
 /docs/build*
+
+.DS_Store

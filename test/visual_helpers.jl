@@ -65,7 +65,7 @@ function test_visual(name::String, typst_code::String; update::Bool = false, pag
             # Compile with Typst (generates test-{page}.png for each page)
             run(
                 pipeline(
-                    `$(typst_exe()) compile $test_file --format png "$png_dir/test-{p}.png"`,
+                    `$(typst_exe()) compile $test_file --ignore-system-fonts --format png "$png_dir/test-{p}.png"`,
                     stderr = devnull,
                     stdout = devnull
                 )
@@ -216,7 +216,7 @@ function test_visual_from_file(name::String, typ_file::String; update::Bool = fa
             # Compile with Typst (generates output-{page}.png for each page)
             run(
                 pipeline(
-                    `$(typst_exe()) compile $typ_file --format png "$png_dir/output-{p}.png"`,
+                    `$(typst_exe()) compile $typ_file --ignore-system-fonts --format png "$png_dir/output-{p}.png"`,
                     stderr = devnull,
                     stdout = devnull
                 )
