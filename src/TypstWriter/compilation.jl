@@ -46,7 +46,14 @@ function optimize_pdf(pdf_file::String; verbose::Bool = false)
         # Get optimized file size
         size_after = filesize(pdf_file)
         size_after_mb = size_after / (1024 * 1024)
-        reduction_pct = round((1 - size_after / size_before) * 100; digits = 1)
+
+        # Guard against division by zero
+        reduction_pct = if size_before > 0
+            round((1 - size_after / size_before) * 100; digits = 1)
+        else
+            @warn "TypstWriter: original PDF size is zero, cannot compute reduction percentage"
+            "N/A"
+        end
 
         @info "TypstWriter: PDF optimization completed." size_after = "$(round(size_after_mb; digits = 2)) MB" reduction = "$(reduction_pct)%" time = "$(round(opt_time; digits = 2))s"
         return true
