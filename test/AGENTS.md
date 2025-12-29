@@ -9,7 +9,10 @@ test/
 ├── runtests.jl         # Main test suite (look here for examples)
 ├── test_helpers.jl     # render_to_typst(), extract_typst_body()
 ├── snapshot_helpers.jl # Snapshot testing utilities
-├── snapshots/          # Saved snapshot files (.typ)
+├── visual_helpers.jl   # Visual regression testing (PNG hashes)
+├── snapshots/          # Saved snapshot files
+│   ├── *.typ           # Text snapshots (Typst code)
+│   └── visual/         # Visual snapshots (PNG hashes + references)
 └── integration/        # Integration tests with actual compilation
     └── fixtures/       # Test fixtures (enhanced_typst, pure_typst, link_edge_cases)
 ```
@@ -21,8 +24,9 @@ test/
 - **Edge cases** (Unicode, deep nesting) → PART 2: Extended Coverage → Edge Cases
 - **Error handling** → PART 2: Extended Coverage → Error Detection
 - **Regression prevention** → PART 3: Snapshot Tests (new features, complex structures)
+- **Layout and visual regression** → PART 4: Visual Regression Tests (PNG snapshots)
 
-### Two Testing Approaches
+### Three Testing Approaches
 
 #### 1. Assertion-Based Tests (Traditional)
 
@@ -36,23 +40,41 @@ output = render_to_typst("**bold**")
 **Pros**: Fast, explicit expectations  
 **Cons**: Only check what you assert, can miss unexpected changes
 
-#### 2. Snapshot Tests (NEW)
+#### 2. Text Snapshot Tests
 
-Use for regression prevention:
+Use for code generation regression:
 
 ```julia
 test_snapshot("feature_name", "# Your markdown")
 ```
 
-**Pros**: Captures full output, detects any change, human-readable diffs  
-**Cons**: Needs manual approval for intentional changes
+**Pros**: Captures full Typst code output, detects any code change  
+**Cons**: Needs manual approval for intentional changes, doesn't catch layout issues
 
-**When to use snapshots**:
+#### 3. Visual Snapshot Tests (NEW)
 
-- New Markdown node support
-- Complex multi-node structures
-- Known edge cases worth preserving
-- Full document output validation
+Use for layout and appearance regression:
+
+```julia
+# Test integration fixture (recommended)
+test_visual_from_file("fixture_name", "path/to/build/output.typ"; pages=[1,2,3,4])
+
+# Test specific config option
+test_visual("config_name", """
+#import "documenter.typ": *
+#show: documenter.with(title: "Test", config: (...))
+...
+"""; pages=[2,3])
+```
+
+**Pros**: Catches visual/layout changes, tests actual rendering, verifies multi-page behavior  
+**Cons**: Requires typst compiler, slower than text tests
+
+**When to use each**:
+
+- **Assertions**: Simple, focused checks on specific outputs
+- **Text snapshots**: New Markdown nodes, code generation verification
+- **Visual snapshots**: Integration fixtures (headers/footers/TOC), template configuration options
 
 ### Three-Layer Testing Pattern
 
@@ -75,6 +97,12 @@ Every significant feature needs three tests:
 - `should_update_snapshots()` - Check if `UPDATE_SNAPSHOTS=1` is set
 - `normalize_snapshot_output(output)` - Remove dynamic content (timestamps, temp paths)
 - `show_snapshot_diff(name, expected, actual)` - Display diff when snapshots don't match
+
+### Visual Helpers (`visual_helpers.jl`)
+
+- `test_visual(name, typst_code; update=false, pages=[1])` - Visual test with inline Typst code
+- `test_visual_from_file(name, typ_file; update=false, pages=[1])` - Visual test from existing .typ file (for integration fixtures)
+- `clean_visual_failures()` - Remove failed PNG files from previous runs
 
 ## Running Tests
 

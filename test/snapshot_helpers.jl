@@ -55,27 +55,24 @@ end
     normalize_snapshot_output(output::String) -> String
 
 Normalize Typst output to remove dynamic/unstable content.
-
-Removes:
-- Timestamps
-- Temporary paths
-- Trailing whitespace
 """
 function normalize_snapshot_output(output::String)
     lines = split(output, '\n')
 
     # Normalize line endings and trim
     output = join(lines, '\n')
-    output = replace(output, "\r\n" => "\n")  # Windows compatibility
+
+    # Windows compatibility
+    output = replace(output, "\r\n" => "\n")
     return strip(output)
 end
 
 """
-    show_snapshot_diff(name::String, expected::String, actual::String)
+    show_snapshot_diff(name::String, expected::AbstractString, actual::AbstractString)
 
 Display diff between expected and actual snapshot output.
 """
-function show_snapshot_diff(name::String, expected::String, actual::String)
+function show_snapshot_diff(name::String, expected::AbstractString, actual::AbstractString)
     println("\n" * "="^80)
     println("❌ SNAPSHOT MISMATCH: $name")
     println("="^80)
