@@ -7,67 +7,58 @@ A [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) plugin for generat
 
 ## Features
 
-- **Fast**: < 60s for `The Julia Language` (Julia doc) (2000+ pages, measured on Apple M4 Max)
+- **Fast**: < 60s for Julia documentation (2000+ pages, measured on Apple M4 Max)
+- **Zero Setup**: Works out of the box with Typst_jll
 - **Math**: LaTeX (via [mitex](https://github.com/mitex-rs/mitex)) + native Typst syntax
-- **Platforms**: Typst_jll (default) | native | none
-- **Markdown**: Full Documenter support
-
-## Installation
-
-```julia
-using Pkg
-Pkg.add("DocumenterTypst")
-```
+- **Full Documenter Support**: All markdown features, cross-references, doctests
 
 ## Quick Start
 
 ```julia
-using Documenter
-using DocumenterTypst
+using Documenter, DocumenterTypst
 
 makedocs(
     sitename = "MyPackage",
-    authors = "Author Name",
+    authors = "Your Name",
     format = DocumenterTypst.Typst(),
-    pages = [
-        "Home" => "index.md",
-        "Guide" => "guide.md",
-    ]
+    pages = ["Home" => "index.md"]
 )
 ```
 
-## Configuration Options
+**Output**: `docs/build/MyPackage.pdf`
+
+See [documentation](https://lucifer1004.github.io/DocumenterTypst.jl/) for details.
+
+## Configuration
 
 ```julia
 DocumenterTypst.Typst(
     platform = "typst",         # "typst" | "native" | "none"
     version = "1.0.0",          # PDF filename: MyPackage-1.0.0.pdf
-    typst = nothing,            # Custom path (for platform="native")
     optimize_pdf = true,        # Compress with pdfcpu (60-85% reduction)
-    use_system_fonts = true,    # Disable to reduce size
-    font_paths = String[],      # Custom font directories
+    use_system_fonts = false,   # Recommended for smaller PDFs
 )
 ```
 
 **Common configurations**:
 
 ```julia
-# Minimal PDF size
-Typst(use_system_fonts = false, optimize_pdf = true)
+# Minimal PDF size (recommended for production)
+format = DocumenterTypst.Typst(
+    use_system_fonts = false,
+    optimize_pdf = true,
+)
 
 # Fast development builds
-Typst(optimize_pdf = false)
-
-# Custom fonts
-Typst(font_paths = ["/path/to/fonts"])
-
-# Native Typst installation
-Typst(platform = "native", typst = "/usr/local/bin/typst")
+format = DocumenterTypst.Typst(
+    platform = "none",          # Skip compilation
+    optimize_pdf = false,
+)
 ```
 
 ## Math Support
 
-LaTeX math (backward compatible):
+**LaTeX** (backward compatible):
 
 ````markdown
 `\alpha + \beta`
@@ -77,7 +68,7 @@ LaTeX math (backward compatible):
 ```
 ````
 
-Typst native syntax:
+**Typst** (native):
 
 ````markdown
 ```math typst
@@ -85,29 +76,15 @@ sum_(i=1)^n i = (n(n+1))/2
 ```
 ````
 
-## Pure Typst Files
-
-Mix `.typ` and `.md` files:
-
-```julia
-pages = [
-    "Home" => "index.md",
-    "Advanced" => "advanced.typ",
-    "API" => "api.md",
-]
-```
-
-**Limitations**: No `@ref` or `@docs` in `.typ` files; images use relative paths.
-
 ## Custom Styling
 
-Create `src/assets/custom.typ`:
+Create `docs/src/assets/custom.typ`:
 
 ```typst
 #let config = (
   light-blue: rgb("3498db"),
-  skip-default-titlepage: true,  // Replace default title
-  // ...
+  text-font: ("Times New Roman", "DejaVu Serif"),
+  skip-default-titlepage: true,
 )
 
 // Custom title page
@@ -122,50 +99,71 @@ Create `src/assets/custom.typ`:
 #pagebreak()
 ```
 
-[Full guide](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/styling/)
+[Full styling guide](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/styling/)
 
-## Debugging
+## Pure Typst Files
 
-Save generated Typst source files:
+Mix `.typ` and `.md` files in documentation:
 
 ```julia
-ENV["DOCUMENTER_TYPST_DEBUG"] = "typst-debug"
-makedocs(format = DocumenterTypst.Typst())
-# Source files saved to typst-debug/
+pages = [
+    "Home" => "index.md",
+    "Advanced" => "advanced.typ",  # Pure Typst file
+    "API" => "api.md",
+]
 ```
 
 ## Comparison with LaTeX
 
 | Feature         | DocumenterTypst  | Documenter (LaTeX) |
 | --------------- | ---------------- | ------------------ |
-| **Compilation** | < 90s            | Several minutes    |
+| **Compilation** | < 60s            | Several minutes    |
 | **Setup**       | Zero (Typst_jll) | LaTeX distribution |
 | **Math**        | LaTeX + Typst    | LaTeX only         |
+| **Errors**      | Clear            | Often cryptic      |
 
-## Requirements
+## Installation
 
-Julia 1.6+
+```julia
+using Pkg
+Pkg.add("DocumenterTypst")
+```
 
-## Related
+**Requirements**: Julia 1.6+
 
-- [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl)
-- [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl)
-- [Typst](https://typst.app/)
+## Documentation
+
+- **[Getting Started](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/getting_started/)** - Quick setup guide
+- **[Configuration](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/configuration/)** - All options explained
+- **[Custom Styling](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/styling/)** - Customize appearance
+- **[Math Support](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/math/)** - LaTeX and Typst math
+- **[Troubleshooting](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/troubleshooting/)** - Common issues
+
+## Debugging
+
+Save generated Typst source files:
+
+```bash
+export DOCUMENTER_TYPST_DEBUG="typst-debug"
+julia docs/make.jl
+# Source files saved to typst-debug/
+```
 
 ## Contributing
 
-See [CONTRIBUTING](docs/src/contributing.md). All changes need a `CHANGELOG.md` entry.
+See [Contributing Guide](docs/src/contributing.md).
+
+**Development setup**:
 
 ```bash
 git clone https://github.com/lucifer1004/DocumenterTypst.jl
 cd DocumenterTypst.jl
-just dev
-
-just test           # Run tests
-just docs-typst     # Build PDF
+just dev         # Install dependencies
+just test        # Run tests
+just docs-typst  # Build PDF documentation
 ```
 
-Requires [just](https://github.com/casey/just): `brew install just`
+Requires [just](https://github.com/casey/just): `brew install just` (macOS) or see [installation](https://github.com/casey/just#installation).
 
 ## License
 
@@ -174,3 +172,9 @@ MIT License - see [LICENSE](LICENSE).
 ## Acknowledgments
 
 Built on [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Typst](https://typst.app/). LaTeX math via [mitex](https://github.com/mitex-rs/mitex).
+
+## Related Projects
+
+- [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) - Julia documentation generator
+- [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl) - Vitepress backend for Documenter
+- [Typst](https://typst.app/) - Modern typesetting system

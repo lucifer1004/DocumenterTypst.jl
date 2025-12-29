@@ -181,8 +181,8 @@ Contains Typst templates and converted graphics:
 Expected compilation time on M4 Max:
 
 - **Platform=none**: ~10 seconds (no PDF compilation)
-- **Platform=typst**: ~60-90 seconds (full build with PDF)
-- **Platform=native**: ~60-90 seconds (depends on system typst)
+- **Platform=typst**: ~60 seconds (full build with PDF)
+- **Platform=native**: ~60 seconds (depends on system typst)
 
 ## Troubleshooting
 

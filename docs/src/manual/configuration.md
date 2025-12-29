@@ -1,8 +1,8 @@
 # Configuration
 
-Detailed configuration options for DocumenterTypst.
+Complete configuration reference for DocumenterTypst.
 
-## Typst Constructor
+## Constructor
 
 ```julia
 DocumenterTypst.Typst(;
@@ -11,42 +11,64 @@ DocumenterTypst.Typst(;
     typst = nothing,
     optimize_pdf = true,
     use_system_fonts = true,
+    font_paths = String[],
 )
 ```
 
+## Parameters
+
 ### `platform::String`
 
-Compilation backend. Options:
+Compilation backend. **Default: `"typst"`**
 
-- **`"typst"`** (default): Uses `Typst_jll.jl`
-  - Automatic installation
-  - Cross-platform
-  - Recommended for CI/CD
+| Value      | Description                       | Use Case           |
+| ---------- | --------------------------------- | ------------------ |
+| `"typst"`  | Uses `Typst_jll.jl` (recommended) | Production, CI/CD  |
+| `"native"` | Uses system `typst` executable    | Development        |
+| `"none"`   | Generate `.typ` source only       | Testing, debugging |
 
-- **`"native"`**: Uses system `typst` executable
-  - Requires manual installation
-  - Can use custom path via `typst` parameter
-  - Useful for development with latest Typst features
+**Examples**:
 
-- **`"none"`**: Generate `.typ` source only
-  - No compilation
-  - Fast for testing
-  - Allows custom compilation pipeline
+```julia
+# Default (recommended)
+format = DocumenterTypst.Typst()
+
+# Use system typst
+format = DocumenterTypst.Typst(platform = "native")
+
+# Generate source only (fast for development)
+format = DocumenterTypst.Typst(platform = "none")
+```
+
+**Installing native Typst**:
+
+```bash
+# macOS
+brew install typst
+
+# Linux (via cargo)
+cargo install --git https://github.com/typst/typst
+
+# Windows
+winget install --id Typst.Typst
+```
 
 ### `version::String`
 
-Version string for the PDF filename.
+Version string for PDF filename. **Default: `""`**
 
 ```julia
-# Output: MyPackage-1.2.3.pdf
 format = DocumenterTypst.Typst(version = "1.2.3")
+# Output: MyPackage-1.2.3.pdf
 ```
 
-If unset, defaults to `ENV["TRAVIS_TAG"]` (deprecated) or empty string.
+If unset, no version suffix is added.
 
 ### `typst::Union{Cmd, String, Nothing}`
 
-Custom path to `typst` executable. Only used with `platform="native"`.
+Custom path to `typst` executable. **Default: `nothing`**
+
+Only used with `platform="native"`.
 
 ```julia
 # String path
@@ -55,7 +77,7 @@ format = DocumenterTypst.Typst(
     typst = "/opt/typst/bin/typst"
 )
 
-# Cmd object
+# Cmd object (with custom flags)
 format = DocumenterTypst.Typst(
     platform = "native",
     typst = `/usr/local/bin/typst --font-path /custom/fonts`
@@ -64,24 +86,24 @@ format = DocumenterTypst.Typst(
 
 ### `optimize_pdf::Bool`
 
-Enable automatic PDF optimization after compilation. **Default: `true`**
+Enable automatic PDF optimization. **Default: `true`**
 
-When enabled, DocumenterTypst automatically optimizes the generated PDF using `pdfcpu`, which:
+When enabled, DocumenterTypst uses `pdfcpu` to compress the generated PDF:
 
 - Compresses uncompressed content streams
 - Optimizes PDF object structure
-- Typically reduces file size by 60-85% for large documents
+- **Typically reduces file size by 60-85%** for large documents
 - Adds ~2 seconds to build time
 
 ```julia
-# Enable optimization (default - recommended for production)
+# Enable optimization (recommended for production)
 format = DocumenterTypst.Typst(optimize_pdf = true)
 
 # Disable optimization (faster builds for development)
 format = DocumenterTypst.Typst(optimize_pdf = false)
 ```
 
-The optimization process shows detailed before/after statistics:
+**Output**:
 
 ```text
 Info: TypstWriter: optimizing PDF with pdfcpu...
@@ -95,38 +117,49 @@ Info: TypstWriter: PDF optimization completed.
 
 ### `use_system_fonts::Bool`
 
-Control whether Typst can use system-installed fonts. **Default: `true`** (for backward compatibility)
+Control whether Typst can use system-installed fonts. **Default: `true`**
 
-When set to `false`, uses Typst's `--ignore-system-fonts` flag, which:
+When set to `false`, uses Typst's `--ignore-system-fonts` flag:
 
 - Prevents Type 3 emoji fonts (e.g., AppleColorEmoji) from being embedded
-- Can reduce PDF size significantly (40+ MB for emoji-heavy documents)
+- **Can reduce PDF size by 40+ MB** for emoji-heavy documents
 - Only fonts explicitly specified in the template will be used
 
 ```julia
-# Use system fonts (default - maximum compatibility)
+# Use system fonts (default, maximum compatibility)
 format = DocumenterTypst.Typst(use_system_fonts = true)
 
-# Ignore system fonts (smaller PDFs, recommended for production)
+# Ignore system fonts (recommended for production)
 format = DocumenterTypst.Typst(use_system_fonts = false)
 ```
 
-**Recommendation**: Set to `false` for production builds to minimize PDF size, especially for large documentation projects.
+**Performance comparison** (Julia documentation, 2211 pages):
 
-!!! note "Performance Impact"
-For the Julia documentation (2211 pages):
+| Configuration        | PDF Size |
+| -------------------- | -------- |
+| With system fonts    | 100 MB   |
+| Without system fonts | 60 MB    |
+| + optimization       | 15 MB    |
 
-- With system fonts: 100 MB (includes Type 3 AppleColorEmoji)
-- Without system fonts: 60 MB (40 MB reduction)
-- After optimization: 15 MB (combined with `optimize_pdf=true`)
+### `font_paths::Vector{String}`
 
-## makedocs Arguments
+Additional font directories for Typst. **Default: `String[]`**
+
+```julia
+format = DocumenterTypst.Typst(
+    font_paths = ["/path/to/fonts", "/another/path"]
+)
+```
+
+Fonts in these directories will be available for use in custom templates.
+
+## Documenter Integration
 
 DocumenterTypst respects these `makedocs` arguments:
 
 ### `sitename::String`
 
-Document title. Appears on title page and in metadata.
+Document title. Appears on title page and in PDF metadata.
 
 ```julia
 makedocs(
@@ -148,7 +181,7 @@ makedocs(
 
 ### `pages::Vector`
 
-Document structure. Converted to table of contents.
+Document structure. Converted to table of contents and sections.
 
 ```julia
 makedocs(
@@ -163,6 +196,44 @@ makedocs(
     format = DocumenterTypst.Typst(),
 )
 ```
+
+## Production Configuration
+
+### Recommended Settings
+
+For **minimal PDF size** and **optimal quality**:
+
+```julia
+makedocs(
+    format = DocumenterTypst.Typst(
+        platform = "typst",           # Use Typst_jll (default)
+        optimize_pdf = true,          # Enable optimization (default)
+        use_system_fonts = false,     # Minimize size (NOT default)
+    ),
+)
+```
+
+This configuration produces PDFs that are:
+
+- 85% smaller than unoptimized builds
+- 40-60 MB smaller than builds with system fonts
+- Comparable in size to LaTeX output
+
+### Development Configuration
+
+For **fast iteration** during development:
+
+```julia
+makedocs(
+    format = DocumenterTypst.Typst(
+        platform = "none",            # Skip PDF generation
+        optimize_pdf = false,         # Skip optimization
+    ),
+    doctest = false,                  # Skip doctests
+)
+```
+
+This only generates the `.typ` source file (~1 second for large projects).
 
 ## Environment Variables
 
@@ -188,7 +259,7 @@ Output location will be printed:
 
 ### `DOCUMENTER_VERBOSE`
 
-Enable verbose output.
+Enable verbose output from Documenter.
 
 ```bash
 export DOCUMENTER_VERBOSE="true"
@@ -219,9 +290,11 @@ Override default styling by creating `docs/src/assets/custom.typ`:
 
 The content of this file is automatically embedded in the generated document.
 
+See [Custom Styling](styling.md) for detailed examples.
+
 ### Custom Title Pages
 
-You can replace the default title page with your own:
+Replace the default title page:
 
 ```typst
 // docs/src/assets/custom.typ
@@ -253,13 +326,9 @@ You can replace the default title page with your own:
 #pagebreak()
 ```
 
-**Note:** When `skip-default-titlepage: true`, you are responsible for creating your title page. The table of contents is still automatically generated.
-
-See the [Custom Styling](styling.md) guide for more details and examples.
-
 ## Performance Tuning
 
-### Compilation Timing
+### Build Timing
 
 DocumenterTypst reports detailed timing for each build stage:
 
@@ -276,64 +345,19 @@ Info: TypstWriter: PDF optimization completed.
 └   time = "0.05s"
 ```
 
-Total build time is typically under 10 seconds for medium-sized documentation.
-
-### Recommended Production Settings
-
-For minimal PDF size and optimal quality:
-
-```julia
-makedocs(
-    format = DocumenterTypst.Typst(
-        platform = "typst",           # Use Typst_jll (default)
-        optimize_pdf = true,          # Enable optimization (default)
-        use_system_fonts = false,     # Minimize size (NOT default)
-    ),
-)
-```
-
-This configuration typically produces PDFs that are:
-
-- 85% smaller than unoptimized builds
-- 40-60 MB smaller than builds with system fonts
-- Comparable in size to LaTeX output (1.5-2x larger)
-
-### Faster Development Builds
-
-For quick iteration during development:
-
-```julia
-makedocs(
-    format = DocumenterTypst.Typst(
-        platform = "none",            # Skip PDF generation
-        optimize_pdf = false,         # Skip optimization
-    ),
-    doctest = false,                  # Skip doctests
-)
-```
-
-This only generates the `.typ` source file, which is much faster (~1 second for large projects).
-
-### Faster Builds
-
-```julia
-makedocs(
-    format = DocumenterTypst.Typst(platform = "none"),
-    doctest = false,  # Skip doctests during development
-)
-```
+Total build time is typically **under 10 seconds** for medium-sized documentation.
 
 ### Parallel Builds
 
 DocumenterTypst uses temporary directories, so you can run multiple builds in parallel:
 
 ```bash
-julia --project=docs -e 'using YourPackage; include("docs/make.jl")' &
-julia --project=docs -e 'using YourPackage; include("docs/make_alternate.jl")' &
+julia --project=docs -e 'include("docs/make.jl")' &
+julia --project=docs -e 'include("docs/make_alternate.jl")' &
 wait
 ```
 
-## CI/CD Configuration
+## CI/CD Integration
 
 ### GitHub Actions
 
@@ -350,13 +374,46 @@ wait
     DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
 ```
 
-### Platform-Specific Notes
+### Platform Support
 
 **Linux**: Works out of the box with `Typst_jll`.
 
 **macOS**: Works out of the box with `Typst_jll`.
 
 **Windows**: Works out of the box with `Typst_jll`. Path handling is automatically normalized.
+
+## Advanced Usage
+
+### Pure Typst Files
+
+Include existing `.typ` files directly alongside Markdown files:
+
+```julia
+makedocs(
+    pages = [
+        "Home" => "index.md",           # Markdown (converted)
+        "Manual" => "manual.typ",       # Pure Typst (included as-is)
+        "API" => [
+            "Overview" => "api/index.md",
+            "Reference" => "api/ref.typ",
+        ],
+    ]
+)
+```
+
+**How it works**:
+
+- **Heading levels**: Automatically adjusted using Typst's `offset` parameter
+- **Resource paths**: Preserved via `#include`
+- **Page breaks**: Level 1-2 headings get automatic page breaks
+
+**Limitations**:
+
+- `.typ` files are **not processed by Documenter** (no `@docs`, no `@ref`)
+- Content is **only included in Typst/PDF output**, not HTML
+- Documenter's cross-reference system doesn't index `.typ` content
+
+See [Getting Started](getting_started.md) for a complete example.
 
 ## Troubleshooting
 

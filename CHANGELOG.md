@@ -5,6 +5,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- **Documentation restructuring**: Improved organization and eliminated redundancy [#8]
+  - Removed redundant files: `manual/pdf_optimization.md` (content merged into `configuration.md`), `examples/basic.md` (content merged into `getting_started.md`)
+  - Streamlined `getting_started.md` from 270 lines to ~150 lines by moving advanced content to appropriate sections
+  - Reorganized `math.md` to prioritize native Typst math over LaTeX (better UX for new users)
+  - Simplified `index.md` and `README.md` to reduce duplication
+  - Updated all internal links to reflect new structure
+  - Unified all documentation to English (except example content demonstrating non-English features)
+
 ### Removed
 
 - **Docker backend (`platform="docker"`)**: Removed unused compilation backend [#8]
@@ -12,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Typst_jll provides better cross-platform support with zero setup
   - Users should migrate to `platform="typst"` (default) or `platform="native"`
   - Reduces maintenance burden and code complexity (41 lines removed)
+
+### Fixed
+
+- **CI linkcheck failure**: Skip `deploydocs()` when running linkcheck to avoid permission errors [#8]
+  - linkcheck job only needs read permissions and shouldn't attempt deployment
 
 ### Added
 
@@ -41,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Typst backend for PDF generation with significantly faster compilation times (< 90s for large projects) compared to LaTeX. ([#5])
+- Typst backend for PDF generation with significantly faster compilation times (< 60s for large projects) compared to LaTeX. ([#5])
 - Support for multiple compilation platforms:
   - `typst` (default): Uses Typst_jll for automatic cross-platform support
   - `native`: Uses system-installed Typst executable

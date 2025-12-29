@@ -8,7 +8,7 @@ DocumenterTypst.jl is a [Documenter.jl](https://github.com/JuliaDocs/Documenter.
 
 ### ⚡ Lightning Fast
 
-- **< 90 seconds** to compile the full Julia documentation (vs several minutes with LaTeX)
+- **< 60 seconds** to compile the full Julia documentation (vs several minutes with LaTeX)
 - Powered by Typst's incremental compilation engine
 
 ### 🎨 Beautiful Output
@@ -35,7 +35,7 @@ DocumenterTypst.jl is a [Documenter.jl](https://github.com/JuliaDocs/Documenter.
 - Comprehensive test coverage (133+ tests)
 - Active maintenance and community support
 
-## Quick Example
+## Quick Start
 
 ```julia
 using Documenter
@@ -54,14 +54,11 @@ makedocs(
 
 This generates a professional PDF with table of contents, cross-references, syntax highlighting, and more.
 
-## Installation
+**Output**: `docs/build/MyPackage.pdf`
 
-```julia
-using Pkg
-Pkg.add("DocumenterTypst")
-```
+See [Getting Started](manual/getting_started.md) for detailed instructions.
 
-## Features at a Glance
+## Features
 
 | Feature           | Status |
 | ----------------- | ------ |
@@ -82,7 +79,7 @@ Pkg.add("DocumenterTypst")
 
 |                        | DocumenterTypst    | Documenter (LaTeX)          |
 | ---------------------- | ------------------ | --------------------------- |
-| **Compilation Time**   | < 90s (Julia docs) | Several minutes             |
+| **Compilation Time**   | < 60s (Julia docs) | Several minutes             |
 | **Setup**              | Zero-config        | Requires LaTeX distribution |
 | **File Size**          | Compact            | Compact                     |
 | **Output Quality**     | High               | High                        |
@@ -90,15 +87,23 @@ Pkg.add("DocumenterTypst")
 | **Error Messages**     | Clear and helpful  | Sometimes cryptic           |
 | **Incremental Builds** | ✅ Fast            | ❌ Slow                     |
 
-## Next Steps
+## Documentation
 
 ```@contents
 Pages = [
     "manual/getting_started.md",
     "manual/configuration.md",
-    "examples/basic.md",
+    "manual/math.md",
+    "manual/styling.md",
 ]
 Depth = 1
+```
+
+## Installation
+
+```julia
+using Pkg
+Pkg.add("DocumenterTypst")
 ```
 
 ## Community
@@ -118,4 +123,4 @@ DocumenterTypst.jl builds upon:
 
 ## License
 
-MIT License.
+MIT License. See [LICENSE](https://github.com/lucifer1004/DocumenterTypst.jl/blob/main/LICENSE) for details.

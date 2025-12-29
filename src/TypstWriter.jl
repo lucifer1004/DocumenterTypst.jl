@@ -481,22 +481,8 @@ function include_typst_file(context::Context, title::AbstractString, depth::Int)
     # +1 if title exists (title itself occupies one level)
     # -1 because .typ uses = for level 1, but offset starts from 0
     heading_offset = depth + (isempty(title) ? 0 : 1) - 1
-
-    # Generate scoped block with offset
-    _println(context, "{")
-    if heading_offset > 0
-        _println(context, "  set heading(offset: $(heading_offset))")
-    end
-    _println(context)
-
-    # Use #include with path relative to build directory
-    # Documenter has already copied src/ to build-typst/, so paths match
     include_path = replace(context.filename, "\\" => "/")
-    _println(context, "  include \"$(include_path)\"")
-    _println(context)
-
-    _println(context, "}")
-    return _println(context)
+    return _println(context, "#extended_include(\"$(include_path)\", offset: $(heading_offset))")
 end
 
 function render(doc::Documenter.Document, settings::Typst = Typst())

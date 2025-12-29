@@ -107,7 +107,7 @@ LaTeX math **just works** - no changes needed!
 ### Faster Compilation
 
 **LaTeX**: Several minutes for large docs
-**Typst**: < 90 seconds
+**Typst**: < 60 seconds
 
 ### Better Error Messages
 
@@ -170,7 +170,7 @@ Tested on Julia documentation (large, complex document):
 | ------------------- | --------- | ---------- |
 | LaTeX (native)      | ~8 min    | 2.1 MB     |
 | LaTeX (tectonic)    | ~5 min    | 2.1 MB     |
-| **DocumenterTypst** | **< 90s** | **2.0 MB** |
+| **DocumenterTypst** | **< 60s** | **2.0 MB** |
 
 _On M4 Max, your results may vary_
 
@@ -264,7 +264,7 @@ Simpler and faster!
 ## Getting Help
 
 - Check [Troubleshooting Guide](../manual/troubleshooting.md)
-- Compare with [Examples](basic.md)
+- See [Advanced Features](advanced.md)
 - Ask in [GitHub Discussions](https://github.com/lucifer1004/DocumenterTypst.jl/discussions)
 
 ## Success Stories

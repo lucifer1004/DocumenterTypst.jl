@@ -29,7 +29,7 @@ docs:
 docs-typst platform="typst":
     @echo "Building Typst documentation with platform: {{platform}}"
     julia --project=docs -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
-    julia --project=docs docs/make.jl typst {if platform == "typst" {""} else {platform}}
+    julia --project=docs docs/make.jl typst {{platform}}
 
 # Generate changelog for docs
 changelog:

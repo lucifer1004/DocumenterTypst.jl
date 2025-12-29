@@ -4,4 +4,3 @@ Manifest*.toml
 !/CHANGELOG.md
 !/AGENTS.md
 /docs/build*
-/test/typst_backend/builds/

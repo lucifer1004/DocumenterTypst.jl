@@ -46,7 +46,7 @@ ls -a | grep -E "^\.(git|jj|hg|svn)"
 **Input**: Documenter.jl's AST (Abstract Syntax Tree) from Markdown documentation  
 **Output**: Professional PDF via Typst typesetting system
 
-**Core Value**: Compile large documentation projects to PDF in <90 seconds vs several minutes with LaTeX.
+**Core Value**: Compile large documentation projects to PDF in < 60 seconds vs several minutes with LaTeX.
 
 ---
 
@@ -112,8 +112,8 @@ DocumenterTypst is a **Documenter plugin**, not a standalone tool. It:
 
 ### Documentation
 
-- **`docs/src/manual/`**: User guides (configuration, styling, math support, troubleshooting)
-- **`docs/src/examples/`**: Complete examples (basic, advanced, migration from LaTeX)
+- **`docs/src/manual/`**: User guides (getting started, configuration, styling, math support, troubleshooting)
+- **`docs/src/examples/`**: Complete examples (advanced features, migration from LaTeX)
 - **`docs/src/api/`**: API reference
 
 ---
@@ -304,7 +304,7 @@ just clean          # Remove build artifacts
 
 - Single-file core logic (`TypstWriter.jl`) instead of complex module hierarchy
 - Direct AST → string conversion, no intermediate representation
-- Minimal configuration surface: only 3 user-facing options
+- Minimal configuration surface with sensible defaults
 
 ### Backward Compatibility First
 

@@ -12,7 +12,6 @@ using DocumenterTypst
 #
 #   For Typst builds, additional options:
 #     native        Use system-installed typst compiler
-#     docker        Use Docker to compile
 #     none          Generate .typ file only, skip compilation
 #
 #   Common options:
@@ -61,8 +60,6 @@ makedocs(;
         # Typst format: determine compilation platform
         typst_platform = if "native" in ARGS
             "native"
-        elseif "docker" in ARGS
-            "docker"
         elseif "none" in ARGS
             "none"
         else
@@ -97,13 +94,11 @@ makedocs(;
         "Manual" => [
             "Getting Started" => "manual/getting_started.md",
             "Configuration" => "manual/configuration.md",
-            "PDF Size Optimization" => "manual/pdf_optimization.md",
             "Math Support" => "manual/math.md",
             "Custom Styling" => "manual/styling.md",
             "Troubleshooting" => "manual/troubleshooting.md",
         ],
         "Examples" => [
-            "Basic Usage" => "examples/basic.md",
             "Advanced Features" => "examples/advanced.md",
             "Migration from LaTeX" => "examples/migration.md",
         ],
@@ -132,8 +127,8 @@ if output_format == :typst
         branch = "gh-pages-typst",
         forcepush = true
     )
-else
-    # Deploy HTML to gh-pages branch
+elseif !("linkcheck" in ARGS)
+    # Deploy HTML to gh-pages branch (skip during linkcheck)
     deploydocs(;
         repo = "github.com/lucifer1004/DocumenterTypst.jl",
         devbranch = "main",
