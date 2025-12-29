@@ -509,7 +509,7 @@
     let loc = here()
 
     if it.level == 1 {
-      colbreak(weak: true)
+      pagebreak(weak: true)
 
       if partcounter.get().first() == 1 and it.numbering != none {
         partcounter.step()
@@ -526,7 +526,7 @@
         #text(cfg.heading-size-part)[#strong(it.body)]
       ]
     } else if it.level == 2 {
-      colbreak(weak: true)
+      pagebreak(weak: true)
 
       align(left + top)[
         #if it.numbering != none {
