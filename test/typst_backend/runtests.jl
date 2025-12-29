@@ -268,12 +268,9 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
                     # Verify mixed .md and .typ content
                     @test contains(content, "Pure Typst Test Documentation")  # from index.md
 
-                    # Verify heading offset is applied
-                    @test contains(content, "set heading(offset:")
-
-                    # Verify #include is used (correct approach for preserving relative paths)
-                    @test contains(content, "include \"simple.typ\"")
-                    @test contains(content, "include \"nested/with_image.typ\"")
+                    # Verify #extended_include is used (correct approach for preserving relative paths with offset)
+                    @test contains(content, "#extended_include(\"simple.typ\", offset: 1)")
+                    @test contains(content, "#extended_include(\"nested/with_image.typ\", offset: 2)")
 
                     # Verify .typ files exist in build directory
                     @test isfile(joinpath(builddir, "simple.typ"))
