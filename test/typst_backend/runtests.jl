@@ -267,18 +267,17 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
 
                     # Verify mixed .md and .typ content
                     @test contains(content, "Pure Typst Test Documentation")  # from index.md
-                    @test contains(content, "Pure Typst Section")  # from simple.typ
-                    @test contains(content, "Nested Document with Image")  # from nested/with_image.typ
 
                     # Verify heading offset is applied
                     @test contains(content, "set heading(offset:")
 
-                    # Verify #include is used
+                    # Verify #include is used (correct approach for preserving relative paths)
                     @test contains(content, "include \"simple.typ\"")
                     @test contains(content, "include \"nested/with_image.typ\"")
 
-                    # Verify safe-block is used
-                    @test contains(content, "#safe-block(")
+                    # Verify .typ files exist in build directory
+                    @test isfile(joinpath(builddir, "simple.typ"))
+                    @test isfile(joinpath(builddir, "nested", "with_image.typ"))
 
                     # Verify extended_heading no longer has within-block parameter
                     @test !contains(content, "within-block:")

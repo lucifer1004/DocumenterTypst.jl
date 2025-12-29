@@ -114,7 +114,11 @@ format = DocumenterTypst.Typst(use_system_fonts = false)
 **Recommendation**: Set to `false` for production builds to minimize PDF size, especially for large documentation projects.
 
 !!! note "Performance Impact"
-For the Julia documentation (2211 pages): - With system fonts: 100 MB (includes Type 3 AppleColorEmoji) - Without system fonts: 60 MB (40 MB reduction) - After optimization: 15 MB (combined with `optimize_pdf=true`)
+For the Julia documentation (2211 pages):
+
+- With system fonts: 100 MB (includes Type 3 AppleColorEmoji)
+- Without system fonts: 60 MB (40 MB reduction)
+- After optimization: 15 MB (combined with `optimize_pdf=true`)
 
 ## makedocs Arguments
 

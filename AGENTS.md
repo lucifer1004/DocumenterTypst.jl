@@ -127,6 +127,9 @@ struct Typst <: Documenter.Writer
     platform::String   # "typst" | "native" | "none"
     version::String    # Semantic version for filename (e.g., "1.0.0")
     typst::Union{Nothing, String, Cmd}  # Custom path to typst executable
+    optimize_pdf::Bool  # Whether to run PDF optimization (via pdfcpu)
+    use_system_fonts::Bool  # Allow system font lookup
+    font_paths::Vector{String}  # Additional font directories
 end
 ```
 

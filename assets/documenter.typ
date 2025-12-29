@@ -39,10 +39,20 @@
 // Container state management for heading pagebreaks
 #let in-container = state("in-container", false)
 
-#let safe-block(body, ..args) = {
+#let safe-block(body, ..args) = context {
+  // Save the current state to handle nested containers correctly
+  let old-state = in-container.get()
+  
+  // Set to true for this block
   in-container.update(true)
-  block(..args, body)
-  in-container.update(false)
+  
+  // Render the block
+  let result = block(..args, body)
+  
+  // Restore the previous state (important for nested containers!)
+  in-container.update(old-state)
+  
+  result
 }
 
 // Default configuration dictionary

@@ -7,16 +7,10 @@ A [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) plugin for generat
 
 ## Features
 
-- **Fast Compilation**: Significantly faster than LaTeX-based PDF generation (< 90s for large projects like Julia documentation on M4 Max)
-- **High-Quality Output**: Professional PDF output with modern typography
-- **Flexible Math Support**:
-  - LaTeX math via [mitex](https://github.com/mitex-rs/mitex) for backward compatibility
-  - Native Typst math syntax for new projects
-- **Multiple Compilation Backends**:
-  - `typst`: Typst_jll (default, works on all platforms)
-  - `native`: System-installed Typst compiler
-  - `none`: Generate `.typ` source only
-- **Rich Markdown Support**: Full support for Documenter's extended Markdown features
+- **Fast**: < 60s for `The Julia Language` (Julia doc) (2000+ pages, measured on Apple M4 Max)
+- **Math**: LaTeX (via [mitex](https://github.com/mitex-rs/mitex)) + native Typst syntax
+- **Platforms**: Typst_jll (default) | native | none
+- **Markdown**: Full Documenter support
 
 ## Installation
 
@@ -44,68 +38,46 @@ makedocs(
 
 ## Configuration Options
 
-### Basic Options
-
 ```julia
 DocumenterTypst.Typst(
-    platform = "typst",  # Compilation backend: "typst", "native", "none"
-    version = "1.0.0",   # Version string for the PDF filename
-    typst = nothing,     # Custom path to typst executable (for platform="native")
+    platform = "typst",         # "typst" | "native" | "none"
+    version = "1.0.0",          # PDF filename: MyPackage-1.0.0.pdf
+    typst = nothing,            # Custom path (for platform="native")
+    optimize_pdf = true,        # Compress with pdfcpu (60-85% reduction)
+    use_system_fonts = true,    # Disable to reduce size
+    font_paths = String[],      # Custom font directories
 )
 ```
 
-### Platform Options
-
-#### `platform="typst"` (Default)
-
-Uses [Typst_jll.jl](https://github.com/JuliaBinaryWrappers/Typst_jll.jl), a Julia binary wrapper that provides the Typst compiler automatically across all platforms.
+**Common configurations**:
 
 ```julia
-format = DocumenterTypst.Typst(platform = "typst")
-```
+# Minimal PDF size
+Typst(use_system_fonts = false, optimize_pdf = true)
 
-#### `platform="native"`
+# Fast development builds
+Typst(optimize_pdf = false)
 
-Uses a system-installed `typst` executable. You can specify a custom path:
+# Custom fonts
+Typst(font_paths = ["/path/to/fonts"])
 
-```julia
-format = DocumenterTypst.Typst(
-    platform = "native",
-    typst = "/usr/local/bin/typst"  # or `typst` Cmd object
-)
-```
-
-#### `platform="none"`
-
-Generates only the `.typ` source file without compiling to PDF. Useful for:
-
-- Debugging Typst output
-- Custom compilation pipelines
-- Testing
-
-```julia
-format = DocumenterTypst.Typst(platform = "none")
+# Native Typst installation
+Typst(platform = "native", typst = "/usr/local/bin/typst")
 ```
 
 ## Math Support
 
-### LaTeX Math (via mitex)
-
-Backward compatible with existing Documenter documentation:
+LaTeX math (backward compatible):
 
 ````markdown
-Inline: `\alpha + \beta`
-
-Display:
+`\alpha + \beta`
 
 ```math
 \sum_{i=1}^n i = \frac{n(n+1)}{2}
 ```
 ````
 
-### Native Typst Math
-
-For new projects, you can use Typst's native math syntax:
+Typst native syntax:
 
 ````markdown
 ```math typst
@@ -113,40 +85,33 @@ sum_(i=1)^n i = (n(n+1))/2
 ```
 ````
 
-## Custom Styling
+## Pure Typst Files
 
-You can customize the PDF appearance by creating a custom template:
+Mix `.typ` and `.md` files:
 
-1. Create `src/assets/custom.typ` in your documentation source directory
-2. Add your customizations:
-
-```typst
-// Override default colors
-#let config = (
-  light-blue: rgb("3498db"),
-  dark-blue: rgb("2c3e50"),
-  // ... other customizations
-)
+```julia
+pages = [
+    "Home" => "index.md",
+    "Advanced" => "advanced.typ",
+    "API" => "api.md",
+]
 ```
 
-### Custom Title Pages
+**Limitations**: No `@ref` or `@docs` in `.typ` files; images use relative paths.
 
-Replace the default title page with your own design:
+## Custom Styling
+
+Create `src/assets/custom.typ`:
 
 ```typst
-// src/assets/custom.typ
-
 #let config = (
-  skip-default-titlepage: true,  // Skip default title page
-  // ... other config
+  light-blue: rgb("3498db"),
+  skip-default-titlepage: true,  // Replace default title
+  // ...
 )
 
-// Your custom title page
-#page(
-  header: none,
-  footer: none,
-  numbering: none,
-)[
+// Custom title page
+#page(header: none, footer: none)[
   #align(center)[
     #v(3cm)
     #image("logo.png", width: 150pt)
@@ -154,116 +119,58 @@ Replace the default title page with your own design:
     #text(size: 48pt)[My Package]
   ]
 ]
-
 #pagebreak()
 ```
 
-For more details, see the [Custom Styling Guide](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/styling/).
+[Full guide](https://lucifer1004.github.io/DocumenterTypst.jl/stable/manual/styling/)
 
-## Advanced Features
+## Debugging
 
-### Custom Template Location
-
-The package looks for `src/assets/custom.typ` by default. If it doesn't exist, an empty template is used.
-
-### Debugging
-
-Set the `DOCUMENTER_TYPST_DEBUG` environment variable to save the generated Typst source files:
+Save generated Typst source files:
 
 ```julia
 ENV["DOCUMENTER_TYPST_DEBUG"] = "typst-debug"
 makedocs(format = DocumenterTypst.Typst())
-# Source files will be saved to typst-debug/ in your project root
+# Source files saved to typst-debug/
 ```
 
-### Version in Filename
+## Comparison with LaTeX
 
-If you specify a semantic version, it will be appended to the output PDF filename:
-
-```julia
-format = DocumenterTypst.Typst(version = "1.2.3")
-# Output: MyPackage-1.2.3.pdf
-```
-
-## Comparison with LaTeX Backend
-
-| Feature              | DocumenterTypst    | Documenter (LaTeX)          |
-| -------------------- | ------------------ | --------------------------- |
-| **Compilation Time** | < 90s (Julia docs) | Several minutes             |
-| **Setup Complexity** | None (Typst_jll)   | Requires LaTeX distribution |
-| **Output Quality**   | High               | High                        |
-| **Math Support**     | LaTeX + Typst      | LaTeX                       |
-| **Customization**    | Typst templates    | LaTeX templates             |
+| Feature         | DocumenterTypst  | Documenter (LaTeX) |
+| --------------- | ---------------- | ------------------ |
+| **Compilation** | < 90s            | Several minutes    |
+| **Setup**       | Zero (Typst_jll) | LaTeX distribution |
+| **Math**        | LaTeX + Typst    | LaTeX only         |
 
 ## Requirements
 
-- Julia 1.10 or later
-- Documenter.jl 1.11 or later
-- Typst_jll.jl (automatically installed) or a system Typst installation
+Julia 1.6+
 
-## Related Packages
+## Related
 
-- [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) - The main documentation generator
-- [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl) - Vitepress backend for Documenter
-- [Typst](https://typst.app/) - The Typst typesetting system
+- [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl)
+- [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl)
+- [Typst](https://typst.app/)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-For detailed guidelines, see [CONTRIBUTING](docs/src/contributing.md).
-
-### Development Quick Start
+See [CONTRIBUTING](docs/src/contributing.md). All changes need a `CHANGELOG.md` entry.
 
 ```bash
-# Clone and setup
 git clone https://github.com/lucifer1004/DocumenterTypst.jl
 cd DocumenterTypst.jl
 just dev
 
-# Run tests
-just test
-
-# Format code with Runic
-just format
-
-# Build HTML docs
-just docs
-
-# Build Typst/PDF docs with different platforms
-just docs-typst           # Use Typst_jll (default)
-just docs-typst native    # Use system typst
-just docs-typst none      # Generate .typ source only (no compilation)
-
-# Run backend tests
-just test-backend         # Use Typst_jll (default)
-just test-backend native  # Use system typst
-just test-backend none    # Generate .typ only (fastest)
-
-# Generate changelog
-just changelog
+just test           # Run tests
+just docs-typst     # Build PDF
 ```
 
-**Note**: This project uses [just](https://github.com/casey/just), a cross-platform command runner. Install it via:
-
-- **macOS/Linux**: `brew install just` or `cargo install just`
-- **Windows**: `cargo install just` or `scoop install just`
-
-See the [just installation guide](https://github.com/casey/just#installation) for more options.
-
-### Changelog Requirements
-
-All user-visible changes **must** have a changelog entry in `CHANGELOG.md` under the "Unreleased" section.
-
-For trivial changes (typo fixes, CI tweaks), add the "Skip Changelog" label to your PR.
+Requires [just](https://github.com/casey/just): `brew install just`
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE).
 
 ## Acknowledgments
 
-- Built on top of [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl)
-- Powered by [Typst](https://typst.app/)
-- LaTeX math rendering via [mitex](https://github.com/mitex-rs/mitex)
-- Inspired by [DocumenterVitepress.jl](https://github.com/LuxDL/DocumenterVitepress.jl)
+Built on [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Typst](https://typst.app/). LaTeX math via [mitex](https://github.com/mitex-rs/mitex).

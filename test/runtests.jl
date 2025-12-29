@@ -145,11 +145,11 @@ end
 
     @testset "Compiler Selection" begin
         @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "native")) isa
-              TypstWriter.NativeCompiler
+            TypstWriter.NativeCompiler
         @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "typst")) isa
-              TypstWriter.TypstJllCompiler
+            TypstWriter.TypstJllCompiler
         @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "none")) isa
-              TypstWriter.NoOpCompiler
+            TypstWriter.NoOpCompiler
     end
 
     # ============================================================================

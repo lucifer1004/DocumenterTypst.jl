@@ -16,4 +16,5 @@ makedocs(;
         ],
     ],
     build = "build",
+    remotes = nothing,  # Disable Git remote detection for tests
 )

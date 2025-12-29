@@ -13,6 +13,10 @@ navigation menu. It goes into the Typst document title.
 
 """
 module TypstWriter
+
+# Disable precompilation to allow method overriding
+__precompile__(false)
+
 import Documenter: Documenter
 using Dates: Dates
 using MarkdownAST: MarkdownAST, Node
@@ -174,6 +178,139 @@ writer_supports_ansicolor(::Typst) = false
 
 # Implement the Documenter runner interface for FormatSelector
 import Documenter: Selectors
+
+# ============================================================================
+# Helper functions copied from Documenter for .typ file support
+# ============================================================================
+
+"""
+    lt_page_typst(a::AbstractString, b::AbstractString)
+
+Checks if the page path `a` should come before `b` in a sorted list.
+Copied from Documenter.Builder.lt_page.
+"""
+function lt_page_typst(a, b)
+    a = endswith(a, "index.md") ? chop(a; tail = 8) : a
+    b = endswith(b, "index.md") ? chop(b; tail = 8) : b
+    return a < b
+end
+
+"""
+    walk_navpages_typst(...)
+
+Recursively walks through pages to generate NavNodes.
+Copied from Documenter.Builder.walk_navpages to enable .typ file support.
+"""
+function walk_navpages_typst(visible, title, src, children, parent, doc)
+    parent_visible = (parent === nothing) || parent.visible
+    if src !== nothing
+        src = normpath(src)
+        src in keys(doc.blueprint.pages) || error("'$src' is not an existing page!")
+    end
+    nn = Documenter.NavNode(src, title, parent)
+    (src === nothing) || push!(doc.internal.navlist, nn)
+    nn.visible = parent_visible && visible
+    nn.children = walk_navpages_typst(children, nn, doc)
+    return nn
+end
+
+function walk_navpages_typst(hps::Tuple, parent, doc)
+    @assert length(hps) == 4
+    return walk_navpages_typst(hps..., parent, doc)
+end
+
+walk_navpages_typst(title::String, children::Vector, parent, doc) = walk_navpages_typst(true, title, nothing, children, parent, doc)
+walk_navpages_typst(title::String, page, parent, doc) = walk_navpages_typst(true, title, page, [], parent, doc)
+
+walk_navpages_typst(p::Pair, parent, doc) = walk_navpages_typst(p.first, p.second, parent, doc)
+walk_navpages_typst(ps::Vector, parent, doc) = [walk_navpages_typst(p, parent, doc)::Documenter.NavNode for p in ps]
+walk_navpages_typst(src::String, parent, doc) = walk_navpages_typst(true, nothing, src, [], parent, doc)
+
+# ============================================================================
+# Override SetupBuildDirectory to handle .typ files
+# ============================================================================
+
+# Hook into SetupBuildDirectory to handle .typ files
+# We need to override this to add .typ files to doc.blueprint.pages
+# This is necessary because Documenter only adds .md files by default
+function Selectors.runner(::Type{Documenter.Builder.SetupBuildDirectory}, doc::Documenter.Document)
+    @info "SetupBuildDirectory: setting up build directory."
+
+    # Frequently used fields.
+    build = doc.user.build
+    source = doc.user.source
+    workdir = doc.user.workdir
+
+    # The .user.source directory must exist.
+    isdir(source) || error("source directory '$(abspath(source))' is missing.")
+
+    # We create the .user.build directory.
+    # If .user.clean is set, we first clean the existing directory.
+    doc.user.clean && isdir(build) && rm(build; recursive = true)
+    isdir(build) || mkpath(build)
+
+    # We'll walk over all the files in the .user.source directory.
+    # MODIFICATION: Also handle .typ files in addition to .md files
+    mdpages = String[]
+    for (root, dirs, files) in walkdir(source; follow_symlinks = true)
+        for dir in dirs
+            d = normpath(joinpath(build, relpath(root, source), dir))
+            isdir(d) || mkdir(d)
+        end
+        for file in files
+            src = normpath(joinpath(root, file))
+            dst = normpath(joinpath(build, relpath(root, source), file))
+
+            if workdir == :build
+                wd = normpath(joinpath(build, relpath(root, source)))
+            elseif workdir isa Symbol
+                throw(ArgumentError("Unrecognized working directory option '$workdir'"))
+            else
+                wd = normpath(joinpath(doc.user.root, workdir))
+            end
+
+            # MODIFICATION: Handle both .md and .typ files
+            if endswith(file, ".md")
+                push!(mdpages, Documenter.srcpath(source, root, file))
+                Documenter.addpage!(doc, src, dst, wd)
+            elseif endswith(file, ".typ")
+                # Add .typ files to blueprint.pages so they can be referenced in pages
+                Documenter.addpage!(doc, src, dst, wd)
+                cp(src, dst; force = true)
+            else
+                cp(src, dst; force = true)
+            end
+        end
+    end
+
+    # If the user hasn't specified the page list, use markdown files only
+    userpages = isempty(doc.user.pages) ? sort(mdpages, lt = lt_page_typst) : doc.user.pages
+
+    # Populating the .navtree and .navlist.
+    for navnode in walk_navpages_typst(userpages, nothing, doc)
+        push!(doc.internal.navtree, navnode)
+    end
+
+    # Finally we populate the .next and .prev fields
+    local prev::Union{Documenter.NavNode, Nothing} = nothing
+    for navnode in doc.internal.navlist
+        navnode.prev = prev
+        if prev !== nothing
+            prev.next = navnode
+        end
+        prev = navnode
+    end
+
+    # If the user specified pagesonly, remove unlisted pages
+    if doc.user.pagesonly
+        navlist_pages = getfield.(doc.internal.navlist, :page)
+        for page in keys(doc.blueprint.pages)
+            page ∈ navlist_pages || delete!(doc.blueprint.pages, page)
+        end
+    end
+    return
+end
+
 function Selectors.runner(
         ::Type{Documenter.FormatSelector}, fmt::Typst, doc::Documenter.Document
     )
@@ -541,21 +678,19 @@ function compile(c::NativeCompiler, fileprefix::String, settings::Typst)
     @info "TypstWriter: compiling Typst to PDF (native)..."
 
     # Build compile command with optional flags
-    cmd_parts = [c.typst_cmd, "compile"]
-    
+    cmd = `$(c.typst_cmd) compile`
+
     # Add font paths
     for path in settings.font_paths
-        push!(cmd_parts, "--font-path")
-        push!(cmd_parts, path)
+        cmd = `$cmd --font-path $path`
     end
-    
+
     # Add system fonts flag
     if !settings.use_system_fonts
-        push!(cmd_parts, "--ignore-system-fonts")
+        cmd = `$cmd --ignore-system-fonts`
     end
-    
-    push!(cmd_parts, "$(fileprefix).typ")
-    cmd = `$cmd_parts`
+
+    cmd = `$cmd $(fileprefix).typ`
 
     compile_time = @elapsed piperun(cmd; clearlogs = true)
     @info "TypstWriter: Typst compilation completed." time = "$(round(compile_time; digits = 2))s"
@@ -566,21 +701,19 @@ function compile(c::TypstJllCompiler, fileprefix::String, settings::Typst)
     @info "TypstWriter: compiling Typst to PDF (Typst_jll)..."
 
     # Build compile command with optional flags
-    cmd_parts = [typst_exe(), "compile"]
-    
+    cmd = `$(typst_exe()) compile`
+
     # Add font paths
     for path in settings.font_paths
-        push!(cmd_parts, "--font-path")
-        push!(cmd_parts, path)
+        cmd = `$cmd --font-path $path`
     end
-    
+
     # Add system fonts flag
     if !settings.use_system_fonts
-        push!(cmd_parts, "--ignore-system-fonts")
+        cmd = `$cmd --ignore-system-fonts`
     end
-    
-    push!(cmd_parts, "$(fileprefix).typ")
-    cmd = `$cmd_parts`
+
+    cmd = `$cmd $(fileprefix).typ`
 
     compile_time = @elapsed piperun(cmd; clearlogs = true)
     @info "TypstWriter: Typst compilation completed." time = "$(round(compile_time; digits = 2))s"
