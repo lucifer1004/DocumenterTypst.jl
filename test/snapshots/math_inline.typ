@@ -1,0 +1,1 @@
+Inline math: #mi("\\alpha + \\beta")

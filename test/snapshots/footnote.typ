@@ -1,0 +1,1 @@
+Text with footnote#footnote[Footnote content.].

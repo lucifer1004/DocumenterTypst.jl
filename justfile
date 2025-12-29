@@ -9,6 +9,11 @@ default:
 test:
     julia --project -e 'using Pkg; Pkg.test()'
 
+# Update snapshot test files
+test-snapshot-update:
+    @echo "Updating all snapshot test files..."
+    UPDATE_SNAPSHOTS=1 julia --project=. test/runtests.jl
+
 # Run integration tests
 # Platforms: typst (default), native, none
 test-integration platform="typst":

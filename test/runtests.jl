@@ -12,10 +12,11 @@ using DocumenterTypst.TypstWriter:
     typstescstr, writer_supports_ansicolor
 
 # ============================================================================
-# Test Helpers (from test_helpers.jl)
+# Test Helpers
 # ============================================================================
 
 include("test_helpers.jl")
+include("snapshot_helpers.jl")
 
 # ============================================================================
 # TEST STRUCTURE
@@ -1352,6 +1353,195 @@ include("test_helpers.jl")
             @test contains(output, "#table(")  # table
             @test contains(output, "#admonition")  # admonition
         end
+    end
+end
+
+# ============================================================================
+# PART 3: SNAPSHOT TESTS
+# ============================================================================
+#
+# Snapshot tests capture complete Typst output for regression detection.
+# Unlike assertion-based tests (e.g., @test contains(...)), snapshots:
+#   - Record FULL output, catching unexpected changes
+#   - Are human-readable .typ files for code review
+#   - Simplify test maintenance (update with UPDATE_SNAPSHOTS=1)
+#
+# When to add snapshots:
+#   - New Markdown node types
+#   - Complex multi-node structures
+#   - Documenter-specific features (@docs, @example)
+#   - Known edge cases
+#
+# Update all snapshots:
+#   UPDATE_SNAPSHOTS=1 julia --project=. test/runtests.jl
+
+@testset "Snapshot Tests" begin
+    update = should_update_snapshots()
+
+    @testset "Basic Markdown Nodes" begin
+        test_snapshot("heading_h1", "# Heading 1"; update)
+        test_snapshot("heading_h2", "## Heading 2"; update)
+        test_snapshot("heading_h3", "### Heading 3"; update)
+
+        test_snapshot("paragraph_simple", "Simple paragraph text."; update)
+        test_snapshot(
+            "paragraph_multiple", """
+            First paragraph.
+
+            Second paragraph.
+            """; update
+        )
+
+        test_snapshot("strong", "**bold text**"; update)
+        test_snapshot("emph", "_italic text_"; update)
+        test_snapshot("strong_emph", "**bold** and _italic_"; update)
+
+        test_snapshot("code_inline", "`code` inline"; update)
+        test_snapshot("link", "[link text](https://example.com)"; update)
+    end
+
+    @testset "Lists" begin
+        test_snapshot(
+            "list_unordered", """
+            - Item 1
+            - Item 2
+            - Item 3
+            """; update
+        )
+
+        test_snapshot(
+            "list_ordered", """
+            1. First
+            2. Second
+            3. Third
+            """; update
+        )
+
+        test_snapshot(
+            "list_nested", """
+            - Top level
+              - Nested item
+              - Another nested
+            - Back to top
+            """; update
+        )
+    end
+
+    @testset "Code Blocks" begin
+        test_snapshot(
+            "code_block_julia", """
+            ```julia
+            x = 1
+            y = 2
+            ```
+            """; update
+        )
+
+        test_snapshot(
+            "code_block_python", """
+            ```python
+            def foo():
+                return 42
+            ```
+            """; update
+        )
+    end
+
+    @testset "Tables" begin
+        test_snapshot(
+            "table_simple", """
+            | A | B |
+            |---|---|
+            | 1 | 2 |
+            """; update
+        )
+
+        test_snapshot(
+            "table_alignment", """
+            | Left | Center | Right |
+            |:-----|:------:|------:|
+            | L    | C      | R     |
+            """; update
+        )
+    end
+
+    @testset "Block Elements" begin
+        test_snapshot(
+            "blockquote", """
+            > This is a quote.
+            > Second line.
+            """; update
+        )
+
+        test_snapshot(
+            "horizontal_rule", """
+            Before
+
+            ---
+
+            After
+            """; update
+        )
+    end
+
+    @testset "Math" begin
+        test_snapshot("math_inline", raw"Inline math: $\alpha + \beta$"; update)
+        test_snapshot(
+            "math_display", raw"""
+            Display math:
+
+            $$
+            E = mc^2
+            $$
+            """; update
+        )
+    end
+
+    @testset "Admonitions" begin
+        test_snapshot(
+            "admonition_note", """
+            !!! note
+                This is a note.
+            """; update
+        )
+
+        test_snapshot(
+            "admonition_warning", """
+            !!! warning "Custom Title"
+                Be careful!
+            """; update
+        )
+    end
+
+    @testset "Complex Structures" begin
+        test_snapshot(
+            "mixed_content", """
+            # Main Title
+
+            This is a paragraph with **bold** and _italic_.
+
+            ## Subsection
+
+            - List item 1
+            - List item 2
+
+            ```julia
+            code_example()
+            ```
+
+            | Col1 | Col2 |
+            |------|------|
+            | A    | B    |
+            """; update
+        )
+
+        test_snapshot(
+            "footnote", """
+            Text with footnote[^1].
+
+            [^1]: Footnote content.
+            """; update
+        )
     end
 end
 
