@@ -59,7 +59,7 @@ Normalize Typst output to remove dynamic/unstable content.
 function normalize_snapshot_output(output::String)
     # Windows compatibility: normalize CRLF before splitting
     output = replace(output, "\r\n" => "\n")
-    
+
     lines = split(output, '\n')
 
     # Normalize line endings and trim

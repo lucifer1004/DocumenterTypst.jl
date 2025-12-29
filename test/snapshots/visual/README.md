@@ -113,7 +113,7 @@ test/snapshots/visual/
 just test
 
 # Or directly
-julia --project=. test/runtests.jl
+julia --project=. test/run_snapshot_tests.jl
 ```
 
 Visual tests are skipped if:
@@ -127,7 +127,7 @@ When you intentionally change visual output:
 
 ```bash
 # Update all snapshots (text + visual)
-UPDATE_SNAPSHOTS=1 julia --project=. test/runtests.jl
+UPDATE_SNAPSHOTS=1 julia --project=. test/run_snapshot_tests.jl
 
 # Or using just
 just test-snapshot-update
@@ -161,7 +161,7 @@ open test/snapshots/visual/references/header_chapter_page2.png
 
 ### For Integration Fixtures
 
-1. Add to `test/runtests.jl` → PART 4: Visual Regression Tests:
+1. Add to `test/run_snapshot_tests.jl` → PART 4: Visual Regression Tests:
 
 ```julia
 @testset "My Fixture" begin
@@ -192,7 +192,7 @@ test_visual("config_option", """
 Then generate initial snapshot:
 
 ```bash
-UPDATE_SNAPSHOTS=1 julia --project=. test/runtests.jl
+UPDATE_SNAPSHOTS=1 julia --project=. test/run_snapshot_tests.jl
 ```
 
 ## What to Test Visually
@@ -220,7 +220,7 @@ UPDATE_SNAPSHOTS=1 julia --project=. test/runtests.jl
 
 ```yaml
 # Visual tests run automatically
-- run: julia --project=. test/runtests.jl
+- run: julia --project=. test/run_snapshot_tests.jl
   # Fails if hashes don't match
   # No PNG generation needed (just hash comparison)
 ```
@@ -345,4 +345,4 @@ More content - no header should appear
 """; pages=[2, 3, 4])
 ```
 
-See `test/runtests.jl` for complete examples.
+See `test/run_snapshot_tests.jl` for complete examples.
