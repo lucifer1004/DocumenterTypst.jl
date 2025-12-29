@@ -23,12 +23,12 @@ This directory contains comprehensive CI/CD configuration for DocumenterTypst.jl
 
 #### Testing
 
-5. **test** - Multi-platform test matrix
+1. **test** - Multi-platform test matrix
    - Julia: 1.10 (min), 1 (stable), nightly
    - OS: Ubuntu, macOS, Windows
    - Arch: x64
    - Coverage: Codecov + Coveralls (parallel submission)
-6. **typst-backend** - Typst-specific integration tests
+2. **typst-backend** - Typst-specific integration tests
    - Platforms: `typst` (Typst_jll), `native`, `none`
    - OS: Ubuntu, Windows
    - Tests all compilation backends
@@ -36,17 +36,17 @@ This directory contains comprehensive CI/CD configuration for DocumenterTypst.jl
 
 #### Documentation
 
-7. **docs** - Build and deploy documentation
+1. **docs** - Build and deploy documentation
    - Uses `julia-docdeploy` action
    - Deploys to GitHub Pages
    - PR previews enabled
-8. **linkcheck** - Verify external links in documentation
+2. **linkcheck** - Verify external links in documentation
    - Runs `makedocs` with `linkcheck` option
 
 #### Finalization
 
-9. **close-coveralls** - Finalize parallel coverage submission
-10. **release** - Create GitHub releases (tags only)
+1. **close-coveralls** - Finalize parallel coverage submission
+2. **release** - Create GitHub releases (tags only)
     - Generates release notes
     - Marks pre-releases (rc/beta)
 
@@ -224,7 +224,7 @@ typos
 just test-backend native
 
 # Or manually
-TYPST_PLATFORM=native julia --project=test/typst_backend test/typst_backend/runtests.jl
+TYPST_PLATFORM=native julia --project=test/integration test/integration/runtests.jl
 
 # Check artifacts in CI (uploaded for 7 days)
 ```

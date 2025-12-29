@@ -63,7 +63,6 @@ That's it! Your markdown files need no changes.
 | LaTeX                 | Typst               | Notes                  |
 | --------------------- | ------------------- | ---------------------- |
 | `platform="native"`   | `platform="native"` | Uses system executable |
-| `platform="docker"`   | `platform="docker"` | Uses Docker            |
 | `platform="tectonic"` | `platform="typst"`  | Use Typst_jll instead  |
 | N/A                   | `platform="none"`   | New: source only       |
 
@@ -71,17 +70,14 @@ That's it! Your markdown files need no changes.
 
 LaTeX math **just works** - no changes needed!
 
-`````markdown
+````markdown
 # Works in both backends
 
 `\\alpha + \\beta = \\gamma`
 
-````math
-\\sum_{i=1}^n i = \\frac{n(n+1)}{2}
-\```
-````
-`````
-
+```math
+\sum_{i=1}^n i = \frac{n(n+1)}{2}
+```
 ````
 
 ### Custom Styling
@@ -108,7 +104,7 @@ LaTeX math **just works** - no changes needed!
 ### Faster Compilation
 
 **LaTeX**: Several minutes for large docs
-**Typst**: < 90 seconds
+**Typst**: < 60 seconds
 
 ### Better Error Messages
 
@@ -162,18 +158,6 @@ If you're using standard Documenter features, migration is seamless.
   ...
 })
 ```
-
-## Performance Comparison
-
-Tested on Julia documentation (large, complex document):
-
-| Backend             | Time      | Size       |
-| ------------------- | --------- | ---------- |
-| LaTeX (native)      | ~8 min    | 2.1 MB     |
-| LaTeX (tectonic)    | ~5 min    | 2.1 MB     |
-| **DocumenterTypst** | **< 90s** | **2.0 MB** |
-
-_On M4 Max, your results may vary_
 
 ## Migration Checklist
 
@@ -265,15 +249,13 @@ Simpler and faster!
 ## Getting Help
 
 - Check [Troubleshooting Guide](../manual/troubleshooting.md)
-- Compare with [Examples](basic.md)
+- See [Advanced Features](advanced.md)
 - Ask in [GitHub Discussions](https://github.com/lucifer1004/DocumenterTypst.jl/discussions)
 
 ## Success Stories
 
 > "Migration took 5 minutes, builds are 10x faster!" - User A
-
 > "Finally, no more LaTeX installation issues in CI" - User B
-
 > "The error messages actually make sense now" - User C
 
 ## Next Steps
@@ -283,4 +265,3 @@ After migration:
 1. [Customize styling](../manual/styling.md)
 2. [Explore Typst math](../manual/math.md)
 3. [Optimize CI builds](advanced.md#performance-optimization)
-````

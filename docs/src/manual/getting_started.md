@@ -1,19 +1,17 @@
 # Getting Started
 
-This guide will help you get started with DocumenterTypst.jl.
+This guide will get you up and running with DocumenterTypst.jl in under a minute.
 
 ## Installation
 
-Add DocumenterTypst to your project:
+Add DocumenterTypst to your documentation project:
 
 ```julia
 using Pkg
 Pkg.add("DocumenterTypst")
 ```
 
-## Basic Usage
-
-### Minimal Example
+## Minimal Example
 
 Create a `docs/make.jl` file:
 
@@ -32,30 +30,99 @@ makedocs(
 )
 ```
 
+Create `docs/src/index.md`:
+
+```markdown
+# YourPackage
+
+Welcome to the documentation!
+```
+
 Run it:
 
 ```bash
 julia --project=docs docs/make.jl
 ```
 
-This generates a PDF in `docs/build/YourPackage.pdf`.
+**Output**: `docs/build/YourPackage.pdf`
 
-### Directory Structure
+That's it! You now have a PDF version of your documentation.
+
+## Next Steps
+
+- **[Configuration](configuration.md)** - Customize compilation, add version numbers, optimize PDF size
+- **[Custom Styling](styling.md)** - Change colors, fonts, and layout
+- **[Math Support](math.md)** - Write mathematical equations
+- **[Advanced Features](../examples/advanced.md)** - Multi-format builds, custom templates, CI/CD
+- **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
+
+## Common Scenarios
+
+### Add a Version Number
+
+```julia
+makedocs(
+    format = DocumenterTypst.Typst(version = "1.0.0"),
+    ...
+)
+```
+
+Output: `YourPackage-1.0.0.pdf`
+
+### Multi-Page Documentation
+
+```julia
+makedocs(
+    pages = [
+        "Home" => "index.md",
+        "Tutorial" => "tutorial.md",
+        "API Reference" => "api.md",
+    ],
+    ...
+)
+```
+
+### Generate Both HTML and PDF
+
+Build HTML first, then PDF:
+
+```julia
+# Build HTML
+makedocs(
+    sitename = "YourPackage",
+    format = Documenter.HTML(),
+    ...
+)
+
+# Build PDF separately
+makedocs(
+    sitename = "YourPackage",
+    format = DocumenterTypst.Typst(),
+    ...
+)
+```
+
+See [Advanced Features](../examples/advanced.md) for a complete example.
+
+## Project Structure
+
+Typical documentation layout:
 
 ```text
 YourPackage/
 ├── src/
 │   └── YourPackage.jl
 ├── docs/
-│   ├── Project.toml
-│   ├── make.jl
+│   ├── Project.toml          # Documentation dependencies
+│   ├── make.jl               # Build script
 │   └── src/
-│       ├── index.md
-│       └── api.md
+│       ├── index.md          # Home page
+│       ├── tutorial.md       # User guide
+│       └── api.md            # API reference
 └── test/
 ```
 
-### docs/Project.toml
+Your `docs/Project.toml` should include:
 
 ```toml
 [deps]
@@ -70,87 +137,24 @@ DocumenterTypst = "0.1"
 
 ## Platform Options
 
-### Default: Typst_jll (Recommended)
+DocumenterTypst works with three compilation backends:
+
+| Platform   | Description                            | Use Case           |
+| ---------- | -------------------------------------- | ------------------ |
+| `"typst"`  | Uses Typst_jll (default, recommended)  | Production, CI/CD  |
+| `"native"` | Uses system-installed typst executable | Development        |
+| `"none"`   | Generate `.typ` source only            | Testing, debugging |
+
+**Default configuration** (recommended for most users):
 
 ```julia
-format = DocumenterTypst.Typst(platform = "typst")
+format = DocumenterTypst.Typst()  # Uses Typst_jll automatically
 ```
 
-- ✅ Works everywhere
-- ✅ No installation needed
-- ✅ Automatic updates
-
-### Native System Typst
+**Custom platform**:
 
 ```julia
-format = DocumenterTypst.Typst(
-    platform = "native",
-    typst = "/usr/local/bin/typst"  # optional custom path
-)
+format = DocumenterTypst.Typst(platform = "native")
 ```
 
-Install Typst first:
-
-```bash
-# macOS
-brew install typst
-
-# Linux
-cargo install --git https://github.com/typst/typst
-
-# Windows
-winget install --id Typst.Typst
-```
-
-### Docker
-
-```julia
-format = DocumenterTypst.Typst(platform = "docker")
-```
-
-Requires Docker installed.
-
-### Source Only (No Compilation)
-
-```julia
-format = DocumenterTypst.Typst(platform = "none")
-```
-
-Generates `.typ` source without compiling to PDF. Useful for:
-
-- Debugging
-- Custom pipelines
-- Testing
-
-## Adding Version Numbers
-
-```julia
-format = DocumenterTypst.Typst(version = "1.0.0")
-```
-
-Output: `YourPackage-1.0.0.pdf`
-
-## Multiple Output Formats
-
-Generate both HTML and PDF:
-
-```julia
-makedocs(
-    sitename = "YourPackage",
-    format = Documenter.HTML(...),
-    ...
-)
-
-# Then generate PDF separately
-makedocs(
-    sitename = "YourPackage",
-    format = DocumenterTypst.Typst(),
-    ...
-)
-```
-
-## Next Steps
-
-- [Configuration Options](configuration.md)
-- [Math Support](math.md)
-- [Custom Styling](styling.md)
+For detailed configuration options, see [Configuration](configuration.md).

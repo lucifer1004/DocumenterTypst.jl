@@ -79,12 +79,12 @@
   heading-size-section: 14pt,
   heading-size-subsection: 13pt,
   heading-size-subsubsection: 12pt,
-  header-size: 10pt,
   admonition-title-size: 12pt,
   metadata-size: 12pt,
   // Fonts
-  text-font: ("Inter", "DejaVu Sans"),
-  code-font: ("JetBrains Mono", "DejaVu Sans Mono"),
+  // Default fonts are embedded in Typst packages for cross-platform consistency
+  text-font: ("Libertinus Serif"),
+  code-font: ("DejaVu Sans Mono"),
   // Spacing and layout
   outline-number-spacing: 0.5em,
   outline-indent-step: 1em,
@@ -107,10 +107,30 @@
   quote-border-width: 4pt,
   quote-inset: (left: 15pt, right: 15pt, top: 10pt, bottom: 10pt),
   quote-radius: (right: 3pt),
-  // Header styling
-  header-line-stroke: 0.5pt,
   // Skip default title page
   skip-default-titlepage: false,
+  // Code block customization
+  codeblock-engine: "codly", // "codly" | "builtin" | "custom"
+  codeblock-custom-show: none, // Function: (raw) => { ... } for custom engine
+  // Codly configuration dictionary (only used when codeblock-engine: "codly")
+  // Users can override any parameter or add additional codly parameters
+  codly-options: (:),
+  // Header customization
+  header-mode: "chapter", // "chapter" | "none" | "custom"
+  header-line-stroke: 0.5pt,
+  header-size: 10pt,
+  header-alignment: right, // left | center | right
+  header-custom-function: none, // Function: (loc, cfg) => { ... }
+  // Footer customization
+  footer-mode: "page-number", // "page-number" | "none" | "custom"
+  footer-size: 10pt,
+  footer-alignment: center, // left | center | right
+  footer-custom-function: none, // Function: (loc, cfg) => { ... }
+  footer-show-on-part-pages: false,
+  // Page numbering customization
+  page-numbering-frontmatter: "i", // Roman numerals for frontmatter
+  page-numbering-mainmatter: "1", // Arabic numerals for main content
+  page-numbering-custom: none, // Function: (page-num, cfg) => { ... }
 )
 #let config = default-config
 
@@ -154,15 +174,6 @@
   )[
     #children
   ]
-}
-
-#let extended_heading(level: 0, outlined: true, within-block: false, body) = {
-  // Add pagebreak for level 1 and 2 headings, unless they are within a block (like admonition)
-  if not within-block and level <= 2 {
-    pagebreak(weak: true)
-  }
-
-  heading(level: level, outlined: outlined, body)
 }
 
 #let outline(title: "Contents", indent: true, depth: 3) = context {
@@ -237,6 +248,102 @@
   }
 }
 
+// Default header function (can be overridden via config)
+#let default-header(loc, cfg) = {
+  // First page has no header
+  if loc.page() <= 1 {
+    return
+  }
+
+  // Check if current page is a Part page (level 1 heading page)
+  let parts_on_page = query(<__part__>).filter(h => h.location().page() == loc.page())
+
+  if parts_on_page.len() > 0 {
+    return // Part pages don't show header
+  }
+
+  // Check if current page is a Chapter first page (level 2 heading page)
+  let chapters_on_page = query(<__chapter__>).filter(h => h.location().page() == loc.page())
+
+  if chapters_on_page.len() > 0 {
+    return // Chapter first pages don't show header
+  }
+
+  // Find the last chapter with page <= current page
+  let all_chapters = query(heading.where(level: 2))
+  let current_chapter = none
+  for ch in all_chapters {
+    if ch.location().page() <= loc.page() {
+      current_chapter = ch
+    } else {
+      break // Query results are in document order
+    }
+  }
+
+  // Display header if valid chapter found
+  if current_chapter != none {
+    align(cfg.header-alignment)[
+      #text(cfg.header-size)[
+        #if current_chapter.numbering != none {
+          // Numbered chapter: show "CHAPTER X. TITLE"
+          // .at() returns value after step(), add 1 for display
+          let chapter_num = chaptercounter.at(current_chapter.location()).first() + 1
+          [CHAPTER #numbering("1", chapter_num). ]
+        }
+        // Always show the title in uppercase
+        #upper(current_chapter.body)
+      ]
+    ]
+    line(length: 100%, stroke: cfg.header-line-stroke)
+  }
+}
+
+// Default footer function (can be overridden via config)
+#let default-footer(loc, cfg) = {
+  // First page has no footer
+  if loc.page() <= 1 {
+    return
+  }
+
+  // Part pages don't show footer (unless configured otherwise)
+  if not cfg.footer-show-on-part-pages {
+    let parts_on_page = query(<__part__>).filter(h => h.location().page() == loc.page())
+    if parts_on_page.len() > 0 {
+      return
+    }
+  }
+
+  // Show page number (automatically uses current numbering style)
+  align(cfg.footer-alignment)[
+    #text(cfg.footer-size)[#counter(page).display()]
+  ]
+}
+
+#let extended_include(path, offset: 0) = context {
+  set heading(offset: offset)
+
+  // Ensure headings within grids/blocks will not become part/chapter
+  show grid: it => {
+    set heading(offset: calc.max(3, offset), outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
+    }
+    it
+  }
+
+  show block: it => {
+    set heading(offset: calc.max(3, offset), outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
+    }
+    it
+  }
+
+  include (path)
+}
+
 #let documenter(
   title: none,
   date: none,
@@ -268,75 +375,27 @@
   set page(
     header: context {
       let loc = here()
+      let cfg = config-state.get()
 
-      // First page has no header
-      if loc.page() <= 1 {
+      if cfg.header-mode == "none" {
         return
-      }
-
-      // 1. Check if current page is a Part page (level 1 heading page)
-      let parts_on_page = query(heading.where(level: 1)).filter(h => h.location().page() == loc.page())
-
-      if parts_on_page.len() > 0 {
-        return // Part pages don't show header
-      }
-
-      // 2. Check if current page is a Chapter first page (level 2 heading page)
-      let chapters_on_page = query(heading.where(level: 2)).filter(h => h.location().page() == loc.page())
-
-      if chapters_on_page.len() > 0 {
-        return // Chapter first pages don't show header
-      }
-
-      // 3. Find the current effective chapter (level 2, both numbered and unnumbered)
-      let all_chapters = query(heading.where(level: 2))
-
-      // 4. Find the last chapter with page <= current page
-      let current_chapter = none
-      for ch in all_chapters {
-        if ch.location().page() <= loc.page() {
-          current_chapter = ch
-        } else {
-          break // Query results are in document order
-        }
-      }
-
-      // 5. Display header if valid chapter found
-      if current_chapter != none {
-        align(center)[
-          #text(cfg.header-size)[
-            #if current_chapter.numbering != none {
-              // Numbered chapter: show "CHAPTER X. TITLE"
-              // .at() returns value after step(), add 1 for display
-              let chapter_num = chaptercounter.at(current_chapter.location()).first() + 1
-              [CHAPTER #numbering("1", chapter_num). ]
-            }
-            // Always show the title in uppercase
-            #upper(current_chapter.body)
-          ]
-        ]
-        line(length: 100%, stroke: cfg.header-line-stroke)
+      } else if cfg.header-mode == "custom" and cfg.header-custom-function != none {
+        (cfg.header-custom-function)(loc, cfg)
+      } else {
+        default-header(loc, cfg)
       }
     },
     footer: context {
       let loc = here()
+      let cfg = config-state.get()
 
-      // First page has no footer
-      if loc.page() <= 1 {
+      if cfg.footer-mode == "none" {
         return
+      } else if cfg.footer-mode == "custom" and cfg.footer-custom-function != none {
+        (cfg.footer-custom-function)(loc, cfg)
+      } else {
+        default-footer(loc, cfg)
       }
-
-      // Part pages don't show footer
-      let parts_on_page = query(heading.where(level: 1)).filter(h => h.location().page() == loc.page())
-
-      if parts_on_page.len() > 0 {
-        return
-      }
-
-      // Show page number (automatically uses current numbering style)
-      align(center)[
-        #counter(page).display()
-      ]
     },
   )
 
@@ -351,16 +410,63 @@
     }
   }
 
-  show: codly-init.with()
-  codly(
-    languages: codly-languages,
-    number-format: none,
-    zebra-fill: none,
-    fill: cfg.codeblock-background,
-    stroke: 1pt + cfg.codeblock-border,
-  )
-  show raw: set text(font: cfg.code-font)
-  show raw.where(block: true): set text(size: cfg.code-size)
+  // Code block rendering: support codly, builtin, or custom engines
+  // Initialize codly if needed (must be at top level)
+  show: if cfg.codeblock-engine == "codly" {
+    codly-init.with()
+  } else {
+    it => it
+  }
+
+  // Configure codly if it's the selected engine
+  if cfg.codeblock-engine == "codly" {
+    // Build default configuration
+    let default-codly-config = (
+      languages: codly-languages,
+      number-format: none,
+      zebra-fill: none,
+      fill: cfg.codeblock-background,
+      stroke: 1pt + cfg.codeblock-border,
+    )
+
+    // Apply configuration
+    codly(..default-codly-config, ..cfg.codly-options)
+  }
+
+  // Apply show rules for non-codly engines
+  show raw.where(block: true): it => {
+    if cfg.codeblock-engine == "builtin" {
+      // Use Typst's default raw block styling
+      set text(font: cfg.code-font, size: cfg.code-size)
+      block(
+        width: 100%,
+        fill: cfg.codeblock-background,
+        stroke: 1pt + cfg.codeblock-border,
+        inset: 8pt,
+        radius: 3pt,
+        it,
+      )
+    } else if cfg.codeblock-engine == "custom" and cfg.codeblock-custom-show != none {
+      // Use user-provided custom show rule for block code
+      set text(font: cfg.code-font, size: cfg.code-size)
+      cfg.codeblock-custom-show(it)
+    } else {
+      // codly or fallback: just apply text styling
+      set text(font: cfg.code-font, size: cfg.code-size)
+      it
+    }
+  }
+
+  // Handle inline code (always apply for non-codly)
+  show raw.where(block: false): it => {
+    if cfg.codeblock-engine == "custom" and cfg.codeblock-custom-show != none {
+      set text(font: cfg.code-font)
+      cfg.codeblock-custom-show(it)
+    } else {
+      set text(font: cfg.code-font)
+      it
+    }
+  }
 
   // Configure table styling for better readability
   set table(
@@ -380,9 +486,31 @@
     it
   }
 
+  // Ensure headings within grids/blocks will not become part/chapter
+  show grid: it => {
+    set heading(offset: 3, outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
+    }
+    it
+  }
+
+  show block: it => {
+    set heading(offset: 3, outlined: false, numbering: none)
+    show heading: h => {
+      h.body
+      linebreak(justify: true)
+    }
+    it
+  }
+
   show heading: it => context {
     let loc = here()
+
     if it.level == 1 {
+      colbreak(weak: true)
+
       if partcounter.get().first() == 1 and it.numbering != none {
         partcounter.step()
         counter(page).update(1)
@@ -398,6 +526,8 @@
         #text(cfg.heading-size-part)[#strong(it.body)]
       ]
     } else if it.level == 2 {
+      colbreak(weak: true)
+
       align(left + top)[
         #if it.numbering != none {
           // Get current value before stepping (for display)
@@ -441,8 +571,9 @@
 
   // Custom quote styling
   show quote: it => {
-    rect(
+    block(
       width: 100%,
+      breakable: true,
       fill: cfg.quote-background,
       stroke: (left: cfg.quote-border-width + cfg.quote-border-color),
       inset: cfg.quote-inset,
@@ -455,21 +586,32 @@
   // Check if user wants to skip the default title page
   // (useful when providing a custom title page in custom.typ)
   let should_show_default_titlepage = (
-    title != none and 
-    cfg.at("skip-default-titlepage", default: false) == false
+    title != none and cfg.at("skip-default-titlepage", default: false) == false
   )
-  
+
   // Front matter: Roman numerals, simplified footer
   set page(
-    numbering: "i",
+    numbering: if cfg.page-numbering-custom != none {
+      // Use custom numbering function if provided
+      (..nums) => cfg.page-numbering-custom(nums.pos(), cfg)
+    } else {
+      cfg.page-numbering-frontmatter
+    },
     footer: context {
       let loc = here()
-      if loc.page() <= 1 { return } // No footer on title page
-      align(center)[#counter(page).display("i")]
+      let cfg = config-state.get()
+
+      if cfg.footer-mode == "none" {
+        return
+      } else if cfg.footer-mode == "custom" and cfg.footer-custom-function != none {
+        (cfg.footer-custom-function)(loc, cfg)
+      } else {
+        default-footer(loc, cfg)
+      }
     },
   )
   counter(page).update(1)
-  
+
   if should_show_default_titlepage {
     align(center + horizon)[
       #text(cfg.heading-size-title)[#strong[#title]]
@@ -488,20 +630,28 @@
 
   // Main matter: Arabic numerals, restore header and footer
   set page(
-    numbering: "1",
+    numbering: if cfg.page-numbering-custom != none {
+      // Use custom numbering function if provided
+      (..nums) => cfg.page-numbering-custom(nums.pos(), cfg)
+    } else {
+      cfg.page-numbering-mainmatter
+    },
     footer: context {
       let loc = here()
-      // Part pages don't show footer
-      let parts_on_page = query(heading.where(level: 1)).filter(h => h.location().page() == loc.page())
-      if parts_on_page.len() > 0 { return }
-      // Show page number
-      align(center)[#counter(page).display("1")]
+
+      if cfg.footer-mode == "none" {
+        return
+      } else if cfg.footer-mode == "custom" and cfg.footer-custom-function != none {
+        (cfg.footer-custom-function)(loc, cfg)
+      } else {
+        default-footer(loc, cfg)
+      }
     },
   )
   counter(page).update(1)
 
   // Configure figure numbering to include chapter number
-  set figure(numbering: num => context {
+  set figure(numbering: num => {
     let chapter_num = chaptercounter.get().first()
     // Format as "Chapter.Figure" (e.g., "1.1", "2.3")
     numbering("1.1", chapter_num, num)

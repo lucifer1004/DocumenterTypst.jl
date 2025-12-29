@@ -1,8 +1,75 @@
 # Math Support
 
-DocumenterTypst supports both LaTeX and native Typst math syntax.
+DocumenterTypst supports both native Typst math and LaTeX math syntax.
 
-## LaTeX Math (via mitex)
+## Which Should I Use?
+
+| Use Case                 | Recommendation              | Reason                      |
+| ------------------------ | --------------------------- | --------------------------- |
+| **New projects**         | Native Typst math           | Faster, cleaner, better UX  |
+| **Migrating from LaTeX** | Keep LaTeX math (via mitex) | Works as-is, zero migration |
+| **Mixed documentation**  | Both (can coexist)          | Flexibility                 |
+
+## Native Typst Math (Recommended)
+
+For new projects, use Typst's native math syntax.
+
+### Display Math
+
+````markdown
+```math typst
+sum_(i=1)^n i = (n(n+1))/2
+```
+````
+
+**Rendered output**:
+
+```math typst
+sum_(i=1)^n i = (n(n+1))/2
+```
+
+### Complex Equations
+
+````markdown
+```math typst
+integral_0^infinity e^(-x^2) dif x = sqrt(pi)/2
+```
+````
+
+### Matrices
+
+````markdown
+```math typst
+mat(
+  1, 2, ..., 10;
+  2, 2, ..., 10;
+  dots.v, dots.v, dots.down, dots.v;
+  10, 10, ..., 10;
+)
+```
+````
+
+### Advantages
+
+- **Faster compilation**: No LaTeX→Typst conversion
+- **Better error messages**: Typst's errors are clearer
+- **More features**: Access to Typst-specific functionality
+- **Cleaner syntax**: Less verbose than LaTeX
+
+### Syntax Comparison
+
+| Feature     | LaTeX                           | Typst                |
+| ----------- | ------------------------------- | -------------------- |
+| Fractions   | `\frac{a}{b}`                   | `a/b` or `frac(a,b)` |
+| Subscript   | `x_{ij}`                        | `x_(i j)`            |
+| Superscript | `x^{2}`                         | `x^2`                |
+| Integral    | `\int_a^b`                      | `integral_a^b`       |
+| Sum         | `\sum_{i=1}^n`                  | `sum_(i=1)^n`        |
+| Matrices    | `\begin{matrix}...\end{matrix}` | `mat(...)`           |
+
+See [Typst Math Documentation](https://typst.app/docs/reference/math/) for complete syntax reference.
+
+## LaTeX Math (For Compatibility)
 
 For backward compatibility with existing Documenter documentation, LaTeX math is supported via [mitex](https://github.com/mitex-rs/mitex).
 
@@ -12,7 +79,7 @@ For backward compatibility with existing Documenter documentation, LaTeX math is
 The equation `E = mc^2` is Einstein's mass-energy equivalence.
 ```
 
-**Rendered output**: The equation `E = mc^2` is Einstein's mass-energy equivalence.
+**Rendered**: The equation `E = mc^2` is Einstein's mass-energy equivalence.
 
 ### Display Math
 
@@ -43,7 +110,7 @@ The equation `E = mc^2` is Einstein's mass-energy equivalence.
 ```
 ````
 
-### Supported LaTeX Features
+### Supported Features
 
 mitex supports most common LaTeX math commands:
 
@@ -62,15 +129,37 @@ Some advanced LaTeX packages are not supported:
 - Complex custom macros
 - Some AMSmath extensions
 
-For these cases, consider using [native Typst math](#native-typst-math).
+**Workaround**: Use native Typst math for advanced features.
 
-## Native Typst Math
+## Migration from LaTeX
 
-For new projects or advanced features, use Typst's native math syntax.
+### Keep Using LaTeX Math
 
-### Syntax
+Your existing LaTeX math **works as-is** via mitex:
 
-Use `math typst` code blocks:
+````markdown
+`\alpha + \beta = \gamma`
+
+```math
+\frac{\partial f}{\partial x} = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}
+```
+````
+
+No changes required!
+
+### Gradual Migration to Typst
+
+Convert incrementally as you update documentation:
+
+**LaTeX** (old):
+
+````markdown
+```math
+\sum_{i=1}^n i = \frac{n(n+1)}{2}
+```
+````
+
+**Typst** (new):
 
 ````markdown
 ```math typst
@@ -78,95 +167,17 @@ sum_(i=1)^n i = (n(n+1))/2
 ```
 ````
 
-### Advantages
+### Mixed Approach
 
-- **Faster compilation**: No LaTeX→Typst conversion
-- **Better error messages**: Typst's errors are clearer
-- **More features**: Access to Typst-specific functionality
-- **Cleaner syntax**: Less verbose than LaTeX
-
-### Examples
-
-#### Inline
-
-```markdown
-The formula `sum_(i=1)^n i` calculates the sum.
-```
-
-**Note**: Native Typst inline math syntax requires Typst context (`.typ` files or raw Typst blocks).
-
-#### Display
+You can use both in the same document:
 
 ````markdown
+Legacy section with LaTeX: `\sum_{i=1}^n i`
+
+New section with Typst:
+
 ```math typst
-mat(
-  1, 2, ..., 10;
-  2, 2, ..., 10;
-  dots.v, dots.v, dots.down, dots.v;
-  10, 10, ..., 10;
-)
-```
-````
-
-#### Complex
-
-````markdown
-```math typst
-integral_0^infinity e^(-x^2) dif x
-  = sqrt(pi)/2
-```
-````
-
-### Comparison
-
-| Feature     | LaTeX                           | Typst                |
-| ----------- | ------------------------------- | -------------------- |
-| Syntax      | `\frac{a}{b}`                   | `a/b`                |
-| Subscript   | `x_{ij}`                        | `x_(i j)`            |
-| Superscript | `x^{2}`                         | `x^2`                |
-| Integral    | `\int_a^b`                      | `integral_a^b`       |
-| Sum         | `\sum_{i=1}^n`                  | `sum_(i=1)^n`        |
-| Fractions   | `\frac{a}{b}`                   | `a/b` or `frac(a,b)` |
-| Matrices    | `\begin{matrix}...\end{matrix}` | `mat(...)`           |
-
-## Migration Guide
-
-### From LaTeX to Typst
-
-If migrating from LaTeX backend:
-
-1. **Keep existing LaTeX math** - It works as-is via mitex
-2. **Gradually adopt Typst** - Convert new sections to Typst syntax
-3. **Test thoroughly** - Compare PDF output
-
-### Converting Equations
-
-**LaTeX**:
-
-```markdown
-`\alpha + \beta = \gamma`
-```
-
-**Typst** (in `.typ` context):
-
-```typst
-// Using raw string to avoid Julia interpolation in docs
-alpha + beta = gamma
-```
-
-**LaTeX**:
-
-````markdown
-```math
-\frac{\partial f}{\partial x} = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}
-```
-````
-
-**Typst**:
-
-````markdown
-```math typst
-(diff f)/(diff x) = lim_(h -> 0) (f(x+h) - f(x))/h
+sum_(i=1)^n i
 ```
 ````
 
@@ -174,28 +185,28 @@ alpha + beta = gamma
 
 ### For New Projects
 
-- Use **native Typst math** for better performance and features
-- Learn Typst syntax - it's simpler than LaTeX
+- **Use native Typst math** for better performance and cleaner syntax
+- Learn Typst syntax - it's simpler and more intuitive than LaTeX
+- See [Typst tutorial](https://typst.app/docs/tutorial/) for examples
 
 ### For Existing Projects
 
-- Keep **LaTeX math** for compatibility
-- Convert incrementally as needed
-- Test changes carefully
+- **Keep LaTeX math** for zero migration cost
+- Convert incrementally as you update sections
+- Test changes carefully to ensure rendering is correct
 
-### Mixed Approach
+### For Large Equations
 
-You can use both in the same document:
+**Break complex equations into smaller parts**:
 
-````markdown
-LaTeX: `\sum_{i=1}^n i`
+```typst
+// Bad (hard to read)
+$ (a + b + c + d + e + f + g + h + i + j) / (x + y + z) $
 
-Typst:
-
-```math typst
-sum_(i=1)^n i
+// Good (readable)
+$ (a + b + c + d + e + f + g + h + i + j) /
+  (x + y + z) $
 ```
-````
 
 ## Debugging Math
 
@@ -217,16 +228,24 @@ Check `typst-debug/*.typ` to see how math was converted.
 1. Check for unsupported LaTeX commands
 2. Try native Typst syntax instead
 3. Enable debug output to see converted code
+4. Consult [mitex documentation](https://github.com/mitex-rs/mitex) for supported commands
 
 **Issue**: Spacing looks wrong
 
 **Solution**:
 
-- LaTeX: Use `\,` `\;` `\quad` for manual spacing
-- Typst: Use `space`, `h(1em)`, etc.
+- **LaTeX**: Use `\,`, `\;`, `\quad` for manual spacing
+- **Typst**: Use `space`, `h(1em)`, `thin`, `thick` spacing
+
+**Issue**: Inline math not working
+
+**Solution**:
+
+- Use backticks for inline math: `` `E = mc^2` ``
+- Native Typst inline math (`$...$`) only works in `.typ` files
 
 ## Resources
 
-- [Typst Math Documentation](https://typst.app/docs/reference/math/)
-- [mitex Documentation](https://github.com/mitex-rs/mitex)
-- [LaTeX to Typst Converter](https://github.com/mitex-rs/mitex)
+- [Typst Math Documentation](https://typst.app/docs/reference/math/) - Complete math syntax reference
+- [mitex Documentation](https://github.com/mitex-rs/mitex) - LaTeX compatibility layer
+- [LaTeX to Typst Guide](https://typst.app/docs/guides/guide-for-latex-users/) - Migration guide

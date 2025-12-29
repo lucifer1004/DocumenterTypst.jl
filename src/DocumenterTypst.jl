@@ -29,7 +29,7 @@ import Documenter: Documenter, Builder, Expanders
 export Typst
 
 # Include the main writer module
-include("TypstWriter.jl")
+include("TypstWriter/TypstWriter.jl")
 using .TypstWriter: Typst
 
 end # module

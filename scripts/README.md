@@ -5,6 +5,7 @@ This directory contains scripts for building Julia's official documentation usin
 ## Overview
 
 The build process:
+
 1. **Clones** the Julia repository to a temporary directory
 2. **Converts** LaTeX assets (logo.tex, cover-splash.tex) to SVG format
 3. **Sets up** the Documenter environment
@@ -23,17 +24,20 @@ The build process:
 ### Installation
 
 **macOS:**
+
 ```bash
 brew install basictex pdf2svg
 # or use dvisvgm from TeX Live (already included)
 ```
 
 **Ubuntu/Debian:**
+
 ```bash
 apt-get install texlive-latex-base texlive-pictures pdf2svg
 ```
 
 **Arch Linux:**
+
 ```bash
 pacman -S texlive-core pdf2svg
 ```
@@ -65,6 +69,7 @@ julia scripts/build_julia_docs.jl --julia-repo ../julia
 ```
 
 **Benefits:**
+
 - Faster (no cloning needed)
 - Useful for development/testing
 - Works with custom Julia branches
@@ -76,7 +81,6 @@ julia scripts/build_julia_docs.jl --julia-repo ../julia
 julia scripts/build_julia_docs.jl --platform=none
 julia scripts/build_julia_docs.jl --platform=native
 julia scripts/build_julia_docs.jl --platform=typst
-julia scripts/build_julia_docs.jl --platform=docker
 
 # Via environment variable (still supported)
 TYPST_PLATFORM=native julia scripts/build_julia_docs.jl
@@ -98,6 +102,7 @@ julia scripts/build_julia_docs.jl --help
 Main build script that orchestrates the entire process.
 
 **Features:**
+
 - Automatic Julia repository cloning (or use existing via `--julia-repo`)
 - Version-aware (uses the commit of your Julia binary)
 - LaTeX asset conversion
@@ -110,11 +115,13 @@ Main build script that orchestrates the entire process.
   - Updates output path from `pdf` to `typst`
 
 **Command-line Arguments:**
+
 - `--julia-repo=PATH` - Use existing Julia repository
 - `--platform=PLATFORM` - Typst compilation backend
 - `--help` - Show help message
 
 **Output:**
+
 - Location: `<julia_repo>/doc/_build/typst/en/`
 - Files: `TheJuliaLanguage.pdf` (or `.typ` if `platform=none`)
 - Generated: `make_typst_generated.jl` (temporary build script)
@@ -124,6 +131,7 @@ Main build script that orchestrates the entire process.
 Converts Julia's LaTeX/TikZ graphics to SVG format.
 
 **Usage:**
+
 ```bash
 bash scripts/convert_latex_assets.sh <julia_assets_dir> <output_dir>
 
@@ -134,10 +142,12 @@ bash scripts/convert_latex_assets.sh \
 ```
 
 **Converts:**
+
 - `logo.tex` → `julia-logo.svg` (7KB)
 - `cover-splash.tex` → `julia-splash.svg` (25KB)
 
 **Requirements:**
+
 - pdflatex
 - pdf2svg or dvisvgm
 
@@ -169,9 +179,10 @@ Contains Typst templates and converted graphics:
 ## Build Time
 
 Expected compilation time on M4 Max:
+
 - **Platform=none**: ~10 seconds (no PDF compilation)
-- **Platform=typst**: ~60-90 seconds (full build with PDF)
-- **Platform=native**: ~60-90 seconds (depends on system typst)
+- **Platform=typst**: ~60 seconds (full build with PDF)
+- **Platform=native**: ~60 seconds (depends on system typst)
 
 ## Troubleshooting
 
@@ -182,6 +193,7 @@ Install the missing tools listed in the Prerequisites section.
 ### "Failed to compile logo.tex"
 
 Check that you have a working LaTeX installation:
+
 ```bash
 pdflatex --version
 ```
@@ -189,6 +201,7 @@ pdflatex --version
 ### "No PDF files found"
 
 If using `platform=native`, ensure typst is installed:
+
 ```bash
 typst --version
 ```
@@ -196,6 +209,7 @@ typst --version
 ### "Build directory not found"
 
 The build might have failed. Check the Julia build logs:
+
 - `make -C /path/to/julia julia-stdlib`
 - `make -C /path/to/julia/doc deps`
 

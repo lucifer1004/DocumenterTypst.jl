@@ -9,3 +9,4 @@ deploydocs = "deploydocs"
 doctest = "doctest"
 ket = "ket"
 braket = "braket"
+typs = "typs"  # .typ files (plural form)
