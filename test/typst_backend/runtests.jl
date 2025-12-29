@@ -268,13 +268,36 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
                     # Verify mixed .md and .typ content
                     @test contains(content, "Pure Typst Test Documentation")  # from index.md
 
-                    # Verify #extended_include is used (correct approach for preserving relative paths with offset)
-                    @test contains(content, "#extended_include(\"simple.typ\", offset: 1)")
-                    @test contains(content, "#extended_include(\"nested/with_image.typ\", offset: 2)")
+                    # Extract all extended_include calls and their offsets
+                    includes = Dict{String, Vector{Int}}()
+                    for m in eachmatch(r"#extended_include\(\"([^\"]+)\.typ\", offset: (\d+)\)", content)
+                        filepath = m.captures[1]
+                        offset = parse(Int, m.captures[2])
+                        if !haskey(includes, filepath)
+                            includes[filepath] = Int[]
+                        end
+                        push!(includes[filepath], offset)
+                    end
+
+                    # Test depth=1, no title => offset=0 (first occurrence of simple.typ)
+                    @test haskey(includes, "simple")
+                    @test 0 in includes["simple"]
+
+                    # Test depth=1, with title => offset=1 (second occurrence of simple.typ)
+                    @test 1 in includes["simple"]
+
+                    # Test depth=2, with title => offset=2
+                    @test haskey(includes, "nested/with_image")
+                    @test includes["nested/with_image"] == [2]
+
+                    # Test depth=3, with title => offset=3
+                    @test haskey(includes, "nested/level3")
+                    @test includes["nested/level3"] == [3]
 
                     # Verify .typ files exist in build directory
                     @test isfile(joinpath(builddir, "simple.typ"))
                     @test isfile(joinpath(builddir, "nested", "with_image.typ"))
+                    @test isfile(joinpath(builddir, "nested", "level3.typ"))
 
                     # Verify extended_heading no longer has within-block parameter
                     @test !contains(content, "within-block:")

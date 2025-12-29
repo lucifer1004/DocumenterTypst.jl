@@ -13,4 +13,3 @@ Testing three levels of headings.
 == Another Subsection
 
 More content to verify proper rendering.
-

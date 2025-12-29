@@ -10,9 +10,13 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "Simple Typst" => "simple.typ",
+        "simple.typ",  # depth=1, no title => offset=0
+        "Simple Typst" => "simple.typ",  # depth=1, with title => offset=1
         "Advanced" => [
-            "Nested with Image" => "nested/with_image.typ",
+            "Nested with Image" => "nested/with_image.typ",  # depth=2, with title => offset=2
+            "Deep" => [
+                "Level 3" => "nested/level3.typ",  # depth=3, with title => offset=3
+            ],
         ],
     ],
     build = "build",
