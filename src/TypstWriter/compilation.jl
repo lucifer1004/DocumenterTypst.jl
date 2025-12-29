@@ -100,7 +100,23 @@ Returns true on success, throws on failure.
 function compile(c::NativeCompiler, fileprefix::String, settings::Typst)
     # Validate that the actual typst command exists
     typst_exe = first(c.typst_cmd.exec)
-    Sys.which(typst_exe) === nothing && error("typst command not found: $typst_exe")
+
+    # Check if it's an absolute or explicit path (contains path separator)
+    if isabspath(typst_exe) || contains(typst_exe, Base.Filesystem.path_separator)
+        # Direct path: validate file exists and is executable
+        if !isfile(typst_exe)
+            error("typst executable not found at path: $typst_exe")
+        end
+        if !Sys.isexecutable(typst_exe)
+            error("typst file is not executable: $typst_exe")
+        end
+    else
+        # Command name: search in PATH
+        if Sys.which(typst_exe) === nothing
+            error("typst command not found in PATH: $typst_exe")
+        end
+    end
+
     @info "TypstWriter: compiling Typst to PDF (native)..."
 
     # Build compile command with optional flags
