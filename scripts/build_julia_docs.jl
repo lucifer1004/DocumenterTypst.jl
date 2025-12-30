@@ -214,42 +214,42 @@ function create_typst_make_script(julia_repo, platform, typst_assets)
                 #image("assets/julia-splash.svg", width: 100%)
             ]
         ]
-        
+
         #v(2.2cm)
-        
+
         #align(center)[
             // Main title
             #text(
-                size: 48pt, 
-                weight: "bold", 
+                size: 48pt,
+                weight: "bold",
                 fill: black
             )[The Julia Language]
-            
+
             #v(1fr)
-            
+
             // Julia Logo
             #image("assets/julia-logo.svg", width: 150pt)
-            
+
             #v(1.5cm)
-            
+
             // Version number
             #text(
                 size: 36pt,
                 weight: "semibold"
             )[V$(VERSION)]
-            
+
             #v(1fr)
-            
+
             // Authors
             #text(size: 24pt)[The Julia Project]
-            
+
             #v(0.5cm)
-            
+
             // Build date
             #text(size: 20pt)[
                 #datetime.today().display("[month repr:long] [day], [year]")
             ]
-            
+
             #v(2cm)
         ]
 

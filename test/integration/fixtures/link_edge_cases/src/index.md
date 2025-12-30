@@ -55,9 +55,9 @@ Test links in different Markdown structures:
 
 ### 6. Multiple links to same target
 
-First reference: [Normal Page](normal.md)  
-Second reference: [Normal Page](normal.md)  
-Third reference: [No Heading Page](no_heading.md)  
+First reference: [Normal Page](normal.md)
+Second reference: [Normal Page](normal.md)
+Third reference: [No Heading Page](no_heading.md)
 Fourth reference: [No Heading Page](no_heading.md)
 
 ### 7. Self-reference

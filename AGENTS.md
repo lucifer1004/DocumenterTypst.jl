@@ -43,7 +43,7 @@ ls -a | grep -E "^\.(git|jj|hg|svn)"
 
 ## What This Project Does
 
-**Input**: Documenter.jl's AST (Abstract Syntax Tree) from Markdown documentation  
+**Input**: Documenter.jl's AST (Abstract Syntax Tree) from Markdown documentation
 **Output**: Professional PDF via Typst typesetting system
 
 **Core Value**: Compile large documentation projects to PDF in < 60 seconds vs several minutes with LaTeX.
@@ -366,17 +366,17 @@ jj bookmark delete my-feature
 
 ## Questions for AI Agents
 
-**Q: Where do I add support for a new Markdown feature?**  
+**Q: Where do I add support for a new Markdown feature?**
 A: Add a `convert()` method in `src/TypstWriter.jl` for the corresponding MarkdownAST node type.
 
-**Q: How do I change the PDF appearance?**  
+**Q: How do I change the PDF appearance?**
 A: Modify `assets/documenter.typ` or guide users to create `docs/src/assets/custom.typ`.
 
-**Q: How does cross-referencing work?**  
+**Q: How does cross-referencing work?**
 A: Documenter resolves references during AST building. TypstWriter generates Typst `#label()` and `#link()` calls using `make_label_id()`.
 
-**Q: Why is compilation slow?**  
+**Q: Why is compilation slow?**
 A: Use `platform="typst"` (Typst_jll) for best performance. Avoid `platform="none"` for production.
 
-**Q: How do I test changes without waiting for compilation?**  
+**Q: How do I test changes without waiting for compilation?**
 A: Use `just test-backend none` (generates `.typ` only, no PDF compilation).

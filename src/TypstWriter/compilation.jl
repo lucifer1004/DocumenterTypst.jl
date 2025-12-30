@@ -177,7 +177,7 @@ end
 """
     compile_typ(doc::Document, settings::Typst, fileprefix::String) -> Bool
 
-Main entry point for Typst compilation. 
+Main entry point for Typst compilation.
 Selects the appropriate compiler, handles errors uniformly, and optionally optimizes PDF.
 """
 function compile_typ(::Documenter.Document, settings::Typst, fileprefix::String)

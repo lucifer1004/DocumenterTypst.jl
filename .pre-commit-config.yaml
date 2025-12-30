@@ -1,7 +1,21 @@
 # Pre-commit hooks for DocumenterTypst.jl
 # Install: pip install pre-commit && pre-commit install
 
+exclude: ^test/snapshots/
+
 repos:
+  # Basic hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+
   # Markdown linting (auto-installs markdownlint-cli2 via npm)
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.20.0

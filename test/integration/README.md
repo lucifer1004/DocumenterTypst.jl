@@ -57,7 +57,7 @@ For detailed instructions, see [`RUNNING_TESTS.md`](RUNNING_TESTS.md).
 - Tests enhanced Typst features with Documenter integration
 - Validates custom Typst content embedding
 
-#### pure_typst  
+#### pure_typst
 
 - Tests pure `.typ` file inclusion
 - Verifies nested directory structures

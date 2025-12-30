@@ -11,7 +11,7 @@ Pages that have headings should link to the first heading automatically.
 
 **Example**: `[Normal Page](normal.md)` → links to `#Normal-Page` label
 
-### 2. Links to pages WITHOUT headings  
+### 2. Links to pages WITHOUT headings
 
 Pages without any headings should get a page-level label and links should work.
 

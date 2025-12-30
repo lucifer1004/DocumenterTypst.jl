@@ -18,9 +18,9 @@ jobs:
           changeLogPath: "CHANGELOG.md"
           skipLabels: "Skip Changelog,dependencies"
           missingUpdateErrorMessage: |
-            No changelog entry found. 
+            No changelog entry found.
 
             Please add an entry to CHANGELOG.md under the "Unreleased" section.
 
-            If this PR doesn't require a changelog entry (e.g. documentation typo fix), 
+            If this PR doesn't require a changelog entry (e.g. documentation typo fix),
             add the "Skip Changelog" label.

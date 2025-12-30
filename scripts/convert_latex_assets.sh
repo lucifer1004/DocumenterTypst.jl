@@ -30,7 +30,7 @@ check_deps() {
         echo "  - Arch:    pacman -S texlive-core"
         exit 1
     fi
-    
+
     # Check for PDF to SVG converter (prefer pdf2svg, fall back to dvisvgm)
     if command -v pdf2svg &> /dev/null; then
         export PDF_TO_SVG="pdf2svg"
@@ -51,9 +51,9 @@ check_deps() {
 # Convert logo.tex to SVG
 convert_logo() {
     echo "Converting Julia logo..."
-    
+
     local temp_dir=$(mktemp -d)
-    
+
     # Create temporary LaTeX document
     cat > "$temp_dir/julia-logo.tex" <<'EOF'
 \documentclass[tikz,border=2pt]{standalone}
@@ -68,23 +68,23 @@ convert_logo() {
 \begin{document}
 \newcommand{\scaleFactor}{1}  % Full size output
 EOF
-    
+
     # Append logo.tex content (excluding comment lines)
     grep -v "^%" "$JULIA_ASSETS/logo.tex" >> "$temp_dir/julia-logo.tex"
-    
+
     echo '\end{document}' >> "$temp_dir/julia-logo.tex"
-    
+
     # Compile LaTeX to PDF
     cd "$temp_dir"
     pdflatex -interaction=nonstopmode julia-logo.tex > /dev/null 2>&1
-    
+
     if [ ! -f julia-logo.pdf ]; then
         echo "Error: Failed to compile logo.tex"
         cat julia-logo.log
         rm -rf "$temp_dir"
         exit 1
     fi
-    
+
     # Convert PDF to SVG
     if [ "$PDF_TO_SVG" = "pdf2svg" ]; then
         pdf2svg julia-logo.pdf "$OUTPUT_DIR/julia-logo.svg"
@@ -92,19 +92,19 @@ EOF
         # Using dvisvgm
         dvisvgm --pdf julia-logo.pdf --output="$OUTPUT_DIR/julia-logo.svg" --no-fonts 2>/dev/null
     fi
-    
+
     # Cleanup
     rm -rf "$temp_dir"
-    
+
     echo "✓ Logo converted: $OUTPUT_DIR/julia-logo.svg"
 }
 
 # Convert splash.tex to SVG
 convert_splash() {
     echo "Converting Julia splash pattern..."
-    
+
     local temp_dir=$(mktemp -d)
-    
+
     # Create temporary LaTeX document
     cat > "$temp_dir/julia-splash.tex" <<'EOF'
 \documentclass[tikz,border=0pt]{standalone}
@@ -119,23 +119,23 @@ convert_splash() {
 
 \begin{document}
 EOF
-    
+
     # Append cover-splash.tex content (excluding comment lines)
     grep -v "^%" "$JULIA_ASSETS/cover-splash.tex" >> "$temp_dir/julia-splash.tex"
-    
+
     echo '\end{document}' >> "$temp_dir/julia-splash.tex"
-    
+
     # Compile LaTeX to PDF
     cd "$temp_dir"
     pdflatex -interaction=nonstopmode julia-splash.tex > /dev/null 2>&1
-    
+
     if [ ! -f julia-splash.pdf ]; then
         echo "Error: Failed to compile cover-splash.tex"
         cat julia-splash.log
         rm -rf "$temp_dir"
         exit 1
     fi
-    
+
     # Convert PDF to SVG
     if [ "$PDF_TO_SVG" = "pdf2svg" ]; then
         pdf2svg julia-splash.pdf "$OUTPUT_DIR/julia-splash.svg"
@@ -143,10 +143,10 @@ EOF
         # Using dvisvgm
         dvisvgm --pdf julia-splash.pdf --output="$OUTPUT_DIR/julia-splash.svg" --no-fonts 2>/dev/null
     fi
-    
+
     # Cleanup
     rm -rf "$temp_dir"
-    
+
     echo "✓ Splash converted: $OUTPUT_DIR/julia-splash.svg"
 }
 
@@ -156,25 +156,25 @@ main() {
     echo "Julia LaTeX to SVG Converter"
     echo "========================================"
     echo ""
-    
+
     # Convert to absolute path
     OUTPUT_DIR=$(cd "$(dirname "$OUTPUT_DIR")" 2>/dev/null && pwd)/$(basename "$OUTPUT_DIR")
-    
+
     echo "Input:  $JULIA_ASSETS"
     echo "Output: $OUTPUT_DIR"
     echo ""
-    
+
     check_deps
-    
+
     mkdir -p "$OUTPUT_DIR"
-    
+
     convert_logo
     convert_splash
-    
+
     echo ""
     echo "All assets converted successfully!"
     echo "Output directory: $OUTPUT_DIR"
-    
+
     # Show generated file information
     echo ""
     echo "Generated files:"

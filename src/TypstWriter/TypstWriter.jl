@@ -133,29 +133,29 @@ makedocs(
 
 The `makedocs` argument `sitename` will be used for the document title.
 The `authors` argument should also be specified and will be used for the document metadata.
-A version number can be specified with the `version` option to `Typst`, which will be 
+A version number can be specified with the `version` option to `Typst`, which will be
 printed in the document and also appended to the output PDF file name.
 
 # Keyword arguments
 
 - **`platform`** sets the platform where the Typst file is compiled. Available options:
-    - `"typst"` (default): Uses Typst_jll, a Julia binary wrapper that automatically 
+    - `"typst"` (default): Uses Typst_jll, a Julia binary wrapper that automatically
       provides the Typst compiler across all platforms.
-    - `"native"`: Uses the system-installed `typst` executable found in `PATH`, or 
+    - `"native"`: Uses the system-installed `typst` executable found in `PATH`, or
       a custom path specified via the `typst` keyword argument.
-    - `"none"`: Skips compilation and only generates the `.typ` source file in the 
+    - `"none"`: Skips compilation and only generates the `.typ` source file in the
       build directory.
 
 - **`version`** specifies the version number printed on the title page of the manual.
-  Defaults to the value in the `TRAVIS_TAG` environment variable (although this behaviour 
+  Defaults to the value in the `TRAVIS_TAG` environment variable (although this behaviour
   is considered deprecated), or to an empty string if `TRAVIS_TAG` is unset.
 
-- **`typst`** allows specifying a custom path to a `typst` executable. Only used when 
+- **`typst`** allows specifying a custom path to a `typst` executable. Only used when
   `platform="native"`. Can be either a `String` path or a `Cmd` object.
 
 - **`optimize_pdf`** enables automatic PDF optimization using pdfcpu after compilation.
-  Defaults to `true`. When enabled, reduces PDF file size by 60-85% by compressing 
-  uncompressed streams and optimizing PDF structure. Set to `false` to skip optimization 
+  Defaults to `true`. When enabled, reduces PDF file size by 60-85% by compressing
+  uncompressed streams and optimizing PDF structure. Set to `false` to skip optimization
   (e.g., for faster builds during development).
 
 - **`use_system_fonts`** controls whether to allow Typst to use system fonts.

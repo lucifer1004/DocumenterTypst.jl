@@ -37,7 +37,7 @@ output = render_to_typst("**bold**")
 @test contains(output, "#strong([bold])")
 ```
 
-**Pros**: Fast, explicit expectations  
+**Pros**: Fast, explicit expectations
 **Cons**: Only check what you assert, can miss unexpected changes
 
 #### 2. Text Snapshot Tests
@@ -48,7 +48,7 @@ Use for code generation regression:
 test_snapshot("feature_name", "# Your markdown")
 ```
 
-**Pros**: Captures full Typst code output, detects any code change  
+**Pros**: Captures full Typst code output, detects any code change
 **Cons**: Needs manual approval for intentional changes, doesn't catch layout issues
 
 #### 3. Visual Snapshot Tests (NEW)
@@ -67,7 +67,7 @@ test_visual("config_name", """
 """; pages=[2,3])
 ```
 
-**Pros**: Catches visual/layout changes, tests actual rendering, verifies multi-page behavior  
+**Pros**: Catches visual/layout changes, tests actual rendering, verifies multi-page behavior
 **Cons**: Requires typst compiler, slower than text tests
 
 **When to use each**:
