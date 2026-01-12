@@ -434,6 +434,63 @@ const PLATFORM = get(ENV, "TYPST_PLATFORM", "typst")
             @warn "Link Edge Cases fixture not found at $fixture_dir, skipping test"
         end
     end
+
+    @testset "DocumenterCitations Integration" begin
+        fixture_dir = joinpath(@__DIR__, "fixtures", "citations")
+
+        if isdir(fixture_dir)
+            mktempdir() do tmpdir
+                # Copy fixture to temporary directory
+                cp(fixture_dir, joinpath(tmpdir, "citations"))
+                test_dir = joinpath(tmpdir, "citations")
+
+                # Run makedocs
+                cd(test_dir) do
+                    include(joinpath(test_dir, "make.jl"))
+                end
+
+                builddir = joinpath(test_dir, "build")
+                @test isdir(builddir)
+
+                # Check for platform="none"
+                if PLATFORM == "none"
+                    typfile = joinpath(builddir, "CitationsTest-0.1.0.typ")
+                    @test isfile(typfile)
+
+                    content = read(typfile, String)
+
+                    # Test 1: Bibliography block is rendered
+                    # Default numeric style uses definition list (#grid)
+                    @test contains(content, "#grid(")
+                    @test contains(content, "columns: (auto, 1fr)")
+
+                    # Test 2: Bibliography items contain reference text
+                    @test contains(content, "Julia")
+                    @test contains(content, "Bezanson")
+                    @test contains(content, "SIAM")
+
+                    # Test 3: Canonical bibliography has anchors with labels
+                    # Labels include page prefix (references.md) for cross-referencing
+                    @test contains(content, "#label(\"references.md#bezanson2017julia\")")
+
+                    # Test 4: Citation links from different files point to references.md
+                    # From index.md
+                    @test contains(content, "#link(label(\"references.md#bezanson2017julia\"))")
+                    # From chapter1.md
+                    @test contains(content, "#link(label(\"references.md#knuth1997art\"))")
+                    # From chapter2.md
+                    @test contains(content, "#link(label(\"references.md#perez2007ipython\"))")
+                else
+                    # For other platforms, verify PDF was created
+                    pdffile = joinpath(builddir, "CitationsTest-0.1.0.pdf")
+                    @test isfile(pdffile)
+                    @test filesize(pdffile) > 1000
+                end
+            end
+        else
+            @warn "Citations fixture not found at $fixture_dir, skipping test"
+        end
+    end
 end
 
 @info "Typst backend tests ($PLATFORM) completed successfully!"

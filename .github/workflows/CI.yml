@@ -76,8 +76,6 @@ jobs:
           version: "1"
       - uses: julia-actions/cache@v2
       - uses: fredrikekre/runic-action@v1
-        with:
-          version: "1.5"
 
   markdownlint:
     name: "Markdownlint (Markdown linting)"

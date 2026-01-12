@@ -6,7 +6,8 @@ makedocs(;
     authors = "Test Suite",
     format = DocumenterTypst.Typst(
         platform = get(ENV, "TYPST_PLATFORM", "typst"),
-        version = "0.1.0"
+        version = "0.1.0",
+        date = "Jan 1, 2025",  # Fixed date for reproducible visual snapshots
     ),
     pages = [
         "Home" => "index.md",

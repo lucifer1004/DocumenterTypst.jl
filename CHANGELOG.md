@@ -5,6 +5,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- DocumenterCitations.jl support via package extension [#15]
+  - Render `@bibliography` blocks with `:dl`, `:ul`, and `:ol` list styles
+  - Automatic anchor generation for citation cross-references
+  - Citation links work seamlessly via DocumenterCitations' ExpandCitations pipeline
+  - Optional dependency: only loaded when user adds DocumenterCitations
+  - Backward compatible with Julia 1.6+ via Requires.jl
+
 ## v0.1.0
 
 ### Added
@@ -105,3 +114,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#5]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/5
 [#8]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/8
 [#9]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/9
+[#15]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/15
