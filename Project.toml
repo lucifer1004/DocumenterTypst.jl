@@ -1,6 +1,6 @@
 name = "DocumenterTypst"
 uuid = "d7fd56dd-41bc-4b2d-b658-79a5840b2e09"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Gabriel Wu <13583761+lucifer1004@users.noreply.github.com> and contributors"]
 
 [deps]

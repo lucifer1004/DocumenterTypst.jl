@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## v0.1.2
+
 ### Fixed
 
 - Escape special Typst characters (`@`, `<`, `>`, etc.) in document metadata fields (`authors`, `sitename`, `version`, `date`) to prevent compilation errors when these fields contain email addresses or other special characters [#18]
