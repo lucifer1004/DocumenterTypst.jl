@@ -692,7 +692,7 @@ typst(io::Context, ::Node, ::MarkdownAST.Backslash) = _print(io, "\\\\")  # Lite
 const _typstescape_chars = Dict{Char, AbstractString}()
 # Build escape map for Typst special characters
 # Using Char literals instead of string with $ to avoid Documenter warnings
-for ch in ['@', '#', '*', '_', '\\', '$', '/', '`', '<', '>']
+for ch in ['@', '#', '*', '_', '\\', '$', '/', '`', '<', '>', '[', ']']
     _typstescape_chars[ch] = string("\\", ch)
 end
 
