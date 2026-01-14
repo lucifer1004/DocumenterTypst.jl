@@ -5,6 +5,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Escape special Typst characters (`@`, `<`, `>`, etc.) in document metadata fields (`authors`, `sitename`, `version`, `date`) to prevent compilation errors when these fields contain email addresses or other special characters [#18]
+
+## v0.1.1
+
 ### Added
 
 - DocumenterCitations.jl support via package extension [#15]
@@ -115,3 +121,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#8]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/8
 [#9]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/9
 [#15]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/15
+[#18]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/18

@@ -992,10 +992,10 @@ function writeheader(io::IO, doc::Documenter.Document, settings::Typst)
     // Use user-provided date or generate current date
 
     #show: doc => documenter(
-        title: [$(doc.user.sitename)],
-        date: [$(isnothing(settings.date) ? Dates.format(Dates.now(), "u d, Y") : settings.date)],
-        version: [$(settings.version)],
-        authors: [$(doc.user.authors)],
+        title: [$(typstesc(doc.user.sitename))],
+        date: [$(typstesc(isnothing(settings.date) ? Dates.format(Dates.now(), "u d, Y") : settings.date))],
+        version: [$(typstesc(settings.version))],
+        authors: [$(typstesc(doc.user.authors))],
         julia-version: [$(VERSION)],
         config: config,
         doc,
