@@ -192,7 +192,7 @@ jobs:
 
       - name: Install system Typst (native platform)
         if: matrix.platform == 'native'
-        uses: typst-community/setup-typst@v4
+        uses: typst-community/setup-typst@v5
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
