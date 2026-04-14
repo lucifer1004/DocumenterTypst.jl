@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Julia code blocks that return an image are saved to an image file, and needed to be called by file name using quotation marks that were previously missing [#28]
+
 ## v0.1.2
 
 ### Fixed
@@ -124,3 +128,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#9]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/9
 [#15]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/15
 [#18]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/18
+[#28]: https://github.com/lucifer1004/DocumenterTypst.jl/issues/28
