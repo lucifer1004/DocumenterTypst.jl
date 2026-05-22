@@ -104,6 +104,69 @@ end
         @test writer_supports_ansicolor(DocumenterTypst.Typst()) == false
     end
 
+    @testset "Template Dependencies" begin
+        expected_versions = Dict(
+            "mitex" => "0.2.7",
+            "itemize" => "0.2.0",
+            "codly" => "1.3.0",
+            "codly-languages" => "0.1.10",
+            "cetz" => "0.5.2",
+        )
+        source_files = [
+            joinpath(@__DIR__, "..", "assets", "documenter.typ"),
+            joinpath(@__DIR__, "..", "docs", "src", "assets", "custom.typ.example"),
+            joinpath(@__DIR__, "..", "docs", "src", "examples", "migration.md"),
+        ]
+        found_versions = Dict{String, Set{String}}()
+        for file in source_files
+            content = read(file, String)
+            for m in eachmatch(r"@preview/([A-Za-z0-9_.-]+):([0-9]+\.[0-9]+\.[0-9]+)", content)
+                push!(get!(found_versions, m.captures[1], Set{String}()), m.captures[2])
+            end
+        end
+
+        @test sort(collect(keys(found_versions))) == sort(collect(keys(expected_versions)))
+        for (package, version) in expected_versions
+            @test found_versions[package] == Set([version])
+        end
+    end
+
+    @testset "GitHub Actions Versions" begin
+        expected_refs = Dict(
+            "actions/checkout" => "v6",
+            "dorny/paths-filter" => "v4",
+            "julia-actions/setup-julia" => "v3",
+            "julia-actions/cache" => "v3",
+            "fredrikekre/runic-action" => "v1",
+            "DavidAnson/markdownlint-cli2-action" => "v23",
+            "crate-ci/typos" => "v1",
+            "julia-actions/julia-buildpkg" => "v1",
+            "julia-actions/julia-processcoverage" => "v1",
+            "codecov/codecov-action" => "v6",
+            "typst-community/setup-typst" => "v5",
+            "actions/upload-artifact" => "v7",
+            "julia-actions/julia-docdeploy" => "v1",
+            "softprops/action-gh-release" => "v3",
+            "dangoslen/changelog-enforcer" => "v3",
+            "actions/github-script" => "v9",
+            "JuliaRegistries/TagBot" => "v1",
+        )
+        workflow_dir = joinpath(@__DIR__, "..", ".github", "workflows")
+        workflow_files = filter(f -> endswith(f, ".yml") || endswith(f, ".yaml"), readdir(workflow_dir; join = true))
+        found_refs = Dict{String, Set{String}}()
+        for file in workflow_files
+            content = read(file, String)
+            for m in eachmatch(r"uses:\s*([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([^\s]+)", content)
+                push!(get!(found_refs, m.captures[1], Set{String}()), m.captures[2])
+            end
+        end
+
+        @test sort(collect(keys(found_refs))) == sort(collect(keys(expected_refs)))
+        for (action, ref) in expected_refs
+            @test found_refs[action] == Set([ref])
+        end
+    end
+
     @testset "Compiler Selection" begin
         @test TypstWriter.get_compiler(DocumenterTypst.Typst(platform = "native")) isa
             TypstWriter.NativeCompiler

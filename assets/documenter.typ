@@ -1,5 +1,5 @@
 // Import mitex for LaTeX math rendering
-#import "@preview/mitex:0.2.6": *
+#import "@preview/mitex:0.2.7": *
 #import "@preview/itemize:0.2.0" as el
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.10": *
@@ -425,6 +425,7 @@
       languages: codly-languages,
       number-format: none,
       zebra-fill: none,
+      lang-format: none,
       fill: cfg.codeblock-background,
       stroke: 1pt + cfg.codeblock-border,
     )

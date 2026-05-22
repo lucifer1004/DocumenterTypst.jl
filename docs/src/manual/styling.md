@@ -131,6 +131,7 @@ Control how code blocks are rendered:
 - `languages`: `codly-languages` (all built-in languages)
 - `number-format`: `none` (no line numbers)
 - `zebra-fill`: `none` (no zebra stripes)
+- `lang-format`: `none` (no language badge, keeps copied PDF text clean)
 - `fill`: `cfg.codeblock-background` (uses color config)
 - `stroke`: `1pt + cfg.codeblock-border` (uses color config)
 
@@ -156,6 +157,7 @@ Control how code blocks are rendered:
     fill: rgb("fafafa"),
     stroke: 2pt + rgb("4a9eff"),
     // You can add ANY codly parameter here, not just the common ones
+    lang-format: auto,
     display-name: true,
     display-icon: false,
     // ... etc
