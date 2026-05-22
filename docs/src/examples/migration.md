@@ -152,9 +152,9 @@ If you're using standard Documenter features, migration is seamless.
 
 ```typst
 // Typst (new)
-#import "@preview/cetz:0.1.0": *
+#import "@preview/cetz:0.5.2"
 
-#canvas({
+#cetz.canvas({
   ...
 })
 ```

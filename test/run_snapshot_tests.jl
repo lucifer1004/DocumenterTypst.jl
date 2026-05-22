@@ -16,6 +16,42 @@ include("test_helpers.jl")
 include("snapshot_helpers.jl")
 include("visual_helpers.jl")
 
+function test_code_block_copy_text()
+    typst = Sys.which("typst")
+    pdftotext = Sys.which("pdftotext")
+    if typst === nothing || pdftotext === nothing
+        return @test_skip "Code block copy-text test requires typst and pdftotext"
+    end
+
+    project_root = dirname(@__DIR__)
+    return mktempdir(project_root) do dir
+        typ_file = joinpath(dir, "copy_text.typ")
+        pdf_file = joinpath(dir, "copy_text.pdf")
+        text_file = joinpath(dir, "copy_text.txt")
+
+        write(
+            typ_file,
+            raw"""
+            #import "../assets/documenter.typ": *
+
+            #show: documenter.with(
+              title: "Copy Text",
+              config: (skip-default-titlepage: true),
+            )
+
+            #raw("notify(callback,\n\tperipheral::Peripheral,\n\tservice::Union{AbstractString, SBLEUUID, SBLESERVICE},\n\tcharacteristic::Union{AbstractString, SBLEUUID, SBLECHARACTERISTIC}\n)", block: true, lang: "julia")
+            """
+        )
+
+        run(`$typst compile --root $project_root $typ_file $pdf_file`)
+        run(`$pdftotext -layout $pdf_file $text_file`)
+
+        text = read(text_file, String)
+        @test !contains(text, "Julia")
+        @test contains(text, "notify(callback,\n    peripheral::Peripheral")
+    end
+end
+
 @testset "Snapshot Tests" begin
     update = should_update_snapshots()
 
@@ -193,6 +229,10 @@ include("visual_helpers.jl")
         end
     else
         @test_skip "Text snapshots skipped (SKIP_TEXT_SNAPSHOTS=1)"
+    end
+
+    @testset "PDF Text Extraction" begin
+        test_code_block_copy_text()
     end
 
     if !skip_visual
