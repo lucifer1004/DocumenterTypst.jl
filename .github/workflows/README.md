@@ -16,7 +16,7 @@ This project uses GitHub Actions for automated testing, documentation, and maint
 - **Code quality**: Format checks (Runic, markdownlint), spell check (typos)
 - **Tests**: Unit, integration, and visual snapshot tests across Julia versions and platforms
 - **Documentation**: Builds HTML docs and deploys to GitHub Pages
-- **Releases**: Creates GitHub releases on new tags
+- **Tags**: Runs the full validation pipeline on release tags created by TagBot
 
 **Key feature**: Smart path detection - README typo fixes run in ~20s instead of ~20min.
 
@@ -42,7 +42,7 @@ This project uses GitHub Actions for automated testing, documentation, and maint
 
 **Runs on**: Issue comments, manual dispatch
 
-**What it does**: Creates Git tags after package registration in Julia General registry.
+**What it does**: Creates Git tags and GitHub releases after package registration in Julia General registry.
 
 ## Local Development
 

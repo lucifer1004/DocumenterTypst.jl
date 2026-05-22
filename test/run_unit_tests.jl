@@ -146,7 +146,6 @@ end
             "typst-community/setup-typst" => "v5",
             "actions/upload-artifact" => "v7",
             "julia-actions/julia-docdeploy" => "v1",
-            "softprops/action-gh-release" => "v3",
             "dangoslen/changelog-enforcer" => "v3",
             "actions/github-script" => "v9",
             "JuliaRegistries/TagBot" => "v1",
@@ -165,6 +164,15 @@ end
         for (action, ref) in expected_refs
             @test found_refs[action] == Set([ref])
         end
+    end
+
+    @testset "Release Automation" begin
+        workflow_dir = joinpath(@__DIR__, "..", ".github", "workflows")
+        workflow_contents = join(read.(filter(f -> endswith(f, ".yml") || endswith(f, ".yaml"), readdir(workflow_dir; join = true)), String), "\n")
+
+        @test contains(workflow_contents, "JuliaRegistries/TagBot@v1")
+        @test !contains(workflow_contents, "softprops/action-gh-release")
+        @test !contains(workflow_contents, "Create GitHub Release")
     end
 
     @testset "Compiler Selection" begin
