@@ -370,24 +370,17 @@ Pkg.test("DocumenterTypst")
 
 2. Update `Project.toml` version
 
-3. Commit and tag:
+3. Commit and merge the release changes to `main`.
 
-   ```bash
-   git commit -am "Release vX.Y.Z"
-   git tag vX.Y.Z
-   git push origin main --tags
-   ```
-
-4. Register with JuliaRegistrator:
+4. Register the release with JuliaRegistrator from the release commit:
 
    ```text
    @JuliaRegistrator register
    ```
 
-5. GitHub Actions will automatically:
-   - Run full test suite
-   - Build documentation
-   - Create GitHub release
+5. After the Julia General registry PR merges, TagBot will automatically create the Git tag and GitHub release.
+
+6. GitHub Actions will automatically run the full test suite and build documentation for the TagBot-created tag.
 
 ## Getting Help
 

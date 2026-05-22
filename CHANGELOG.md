@@ -5,10 +5,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## v0.2.0
+
 ### Changed
 
 - Update GitHub Actions workflow dependencies to their latest major versions.
 - Update Typst Universe package references to their latest versions, including mitex v0.2.7 and CeTZ v0.5.2 [#29]
+- Use TagBot as the sole GitHub release creator after Julia registry publication.
+- Polish justfile task organization with grouped recipes, aliases, and Markdown lint check/write commands.
 
 ### Fixed
 
